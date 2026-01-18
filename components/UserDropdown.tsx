@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 import {useRouter} from "next/dist/client/components/navigation";
+import {Button} from "@/components/ui/button";
+
 
 const UserDropdown = () => {
     const router = useRouter();
@@ -23,7 +25,11 @@ const UserDropdown = () => {
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger>Open</DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-3 text-gray-4 hover:text-yellow-500">
+
+                </Button>
+            </DropdownMenuTrigger>
             <DropdownMenuContent>
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
