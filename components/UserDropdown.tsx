@@ -12,7 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {useRouter} from "next/dist/client/components/navigation";
 import {Button} from "@/components/ui/button";
-
+import NavItems from "@/components/NavItems";
 
 const UserDropdown = () => {
     const router = useRouter();
@@ -70,6 +70,7 @@ const UserDropdown = () => {
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator className="hidden sm:block bg-gray-600"/>
+
                 <nav className="sm:hidden">
                     {/*<NavItems initialStocks={initialStocks} />*/}
                 </nav>
