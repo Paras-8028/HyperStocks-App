@@ -5,6 +5,13 @@ import * as LabelPrimitive from "@radix-ui/react-label"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Renders a label element with default utility classes and allows additional class names.
+ *
+ * @param className - Additional CSS class names to merge with the component's default classes
+ * @param props - All other props are forwarded to the underlying `LabelPrimitive.Root`
+ * @returns A `LabelPrimitive.Root` element with merged class names and forwarded props
+ */
 function Label({
   className,
   ...props
