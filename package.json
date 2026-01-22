@@ -21,6 +21,8 @@
     "cmdk": "^1.1.1",
     "country-list": "^2.4.1",
     "lucide-react": "^0.562.0",
+    "mongodb": "^7.0.0",
+    "mongoose": "^9.1.5",
     "next": "16.1.2",
     "react": "19.2.3",
     "react-country-list": "^1.0.6",
