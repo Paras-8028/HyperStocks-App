@@ -4,9 +4,9 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/forms/InputField';
 import FooterLink from '@/components/forms/FooterLink';
-// import {signInWithEmail, signUpWithEmail} from "@/lib/actions/auth.actions";
-// import {toast} from "sonner";
-// import {signInEmail} from "better-auth/api";
+import {signInWithEmail, signUpWithEmail} from "@/lib/actions/auth.actions";
+import {toast} from "sonner";
+import {signInEmail} from "better-auth/api";
 import {useRouter} from "next/navigation";
 
 const SignIn = () => {
