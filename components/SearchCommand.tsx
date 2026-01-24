@@ -8,6 +8,14 @@ import Link from "next/link";
 import {searchStocks} from "@/lib/actions/finnhub.actions";
 import {useDebounce} from "@/hooks/useDebounce";
 
+/**
+ * Renders a trigger and a searchable command dialog for finding and selecting stocks.
+ *
+ * @param renderAs - How the trigger is rendered: `'button'` (default) shows a Button, `'text'` shows inline clickable text.
+ * @param label - Text displayed on the trigger (default: `'Add stock'`).
+ * @param initialStocks - Initial list of stocks shown when no search term is active.
+ * @returns A React element containing the trigger and a command-style dialog with search input and stock results.
+ */
 export default function SearchCommand({ renderAs = 'button', label = 'Add stock', initialStocks }: SearchCommandProps) {
     const [open, setOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")

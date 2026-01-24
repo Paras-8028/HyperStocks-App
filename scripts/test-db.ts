@@ -1,5 +1,11 @@
 import { connectToDatabase } from "../database/mongoose";
 
+/**
+ * Performs a database connectivity check and terminates the process with a success or failure exit code.
+ *
+ * On success, logs "OK: Database connection succeeded" and exits with code 0.
+ * On failure, logs "ERROR: Database connection failed" and the thrown error, then exits with code 1.
+ */
 async function main() {
     try {
         await connectToDatabase();
