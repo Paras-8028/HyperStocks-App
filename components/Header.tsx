@@ -13,9 +13,11 @@ const Header = async ({ user }: { user: User }) => {
                 <Link href="/">
                     <Image src="/assets/icons/L1.png" alt="HyperStocks logo" width={140} height={32} className="h-10 w-auto cursor-pointer"/>
                 </Link>
+
                 <nav className="hidden sm:block">
                     <NavItems initialStocks={initialStocks} />
                 </nav>
+
                 <UserDropdown user={user} initialStocks={initialStocks} />
             </div>
         </header>

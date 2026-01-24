@@ -487,3 +487,9 @@
 .scrollbar-hide-default::-webkit-scrollbar-thumb:hover {
   background-color: #9095A1;
 }
+
+/* Hide shadcn/cmdk default dialog text */
+[cmdk-dialog-title],
+[cmdk-dialog-description] {
+  display: none !important;
+}
