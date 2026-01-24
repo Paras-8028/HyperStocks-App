@@ -9,6 +9,12 @@ import {
     COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from "@/lib/constants";
 
+/**
+ * Render the stock details page populated with TradingView widgets for the requested symbol.
+ *
+ * @param params - Route parameters object containing `symbol`, the stock ticker to display
+ * @returns A React element with a two-column layout of TradingView widgets and a watchlist button for the provided `symbol`
+ */
 export default async function StockDetails({ params }: StockDetailsPageProps) {
     const { symbol } = await params;
     const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;

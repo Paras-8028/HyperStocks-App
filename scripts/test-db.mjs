@@ -1,6 +1,14 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
 
+/**
+ * Tests the MongoDB connection using the MONGODB_URI environment variable and exits with a status code.
+ *
+ * Reads MONGODB_URI from the environment, attempts to connect with mongoose, logs a success message
+ * containing the database name, host, and connection time, closes the connection, and exits with code 0.
+ * If MONGODB_URI is missing it logs an error and exits with code 1. On connection failure it logs the error,
+ * attempts to close the connection, and exits with code 1.
+ */
 async function main() {
     const uri = process.env.MONGODB_URI;
     if (!uri) {
