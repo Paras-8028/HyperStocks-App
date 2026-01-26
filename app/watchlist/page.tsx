@@ -21,7 +21,7 @@ const WatchlistPage = async () => {
     }
 
     return (
-        <div className="container py-8">
+        <div className="container max-w-5xl py-8 space-y-6">
             <h1 className="text-2xl font-semibold text-gray-100 mb-6">
                 Your Watchlist
             </h1>

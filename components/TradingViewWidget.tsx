@@ -1,44 +1,31 @@
-'use client';
-
-import React, { memo } from 'react';
+"use client";
+import { memo } from "react";
 import useTradingViewWidget from "@/hooks/useTradingViewWidget";
 import { cn } from "@/lib/utils";
 
 interface TradingViewWidgetProps {
-    title?: string;
     scriptUrl: string;
     config: Record<string, unknown>;
-    height?: number;
+    height: number;
     className?: string;
 }
 
 const TradingViewWidget = ({
-                               title,
                                scriptUrl,
                                config,
-                               height = 400,
+                               height,
                                className,
                            }: TradingViewWidgetProps) => {
-    const containerRef = useTradingViewWidget(scriptUrl, config, height);
+    const ref = useTradingViewWidget(scriptUrl, config, height);
 
     return (
-        <div className="w-full">
-            {title && (
-                <h3 className="text-lg font-semibold text-gray-100 mb-3">
-                    {title}
-                </h3>
+        <div
+            ref={ref}
+            className={cn(
+                "tradingview-widget-container w-full overflow-hidden rounded-lg",
+                className
             )}
-
-            {/* IMPORTANT: container only */}
-            <div
-                ref={containerRef}
-                className={cn(
-                    "tradingview-widget-container rounded-lg overflow-hidden",
-                    className
-                )}
-                style={{ height }}
-            />
-        </div>
+        />
     );
 };
 

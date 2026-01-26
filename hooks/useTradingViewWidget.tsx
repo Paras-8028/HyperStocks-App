@@ -1,30 +1,41 @@
-'use client';
-import { useEffect, useRef }     from "react";
+"use client";
+import { useEffect, useRef } from "react";
 
-const useTradingViewWidget = (scriptUrl: string, config: Record<string, unknown>, height = 600) => {
-    const containerRef = useRef<HTMLDivElement | null>(null);
+const useTradingViewWidget = (
+    scriptUrl: string,
+    config: Record<string, unknown>,
+    height: number
+) => {
+    const ref = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        if (!containerRef.current) return;
-        if (containerRef.current.dataset.loaded) return;
-        containerRef.current.innerHTML = `<div class="tradingview-widget-container__widget" style="width: 100%; height: ${height}px;"></div>`;
+        if (!ref.current) return;
+
+        // Clear previous widget safely
+        ref.current.innerHTML = "";
+
+        const widget = document.createElement("div");
+        widget.className = "tradingview-widget-container__widget";
+        widget.style.width = "100%";
+        widget.style.height = `${height}px`;
 
         const script = document.createElement("script");
         script.src = scriptUrl;
         script.async = true;
+        script.type = "text/javascript";
         script.innerHTML = JSON.stringify(config);
 
-        containerRef.current.appendChild(script);
-        containerRef.current.dataset.loaded = 'true';
+        ref.current.appendChild(widget);
+        ref.current.appendChild(script);
 
         return () => {
-            if(containerRef.current) {
-                containerRef.current.innerHTML = '';
-                delete containerRef.current.dataset.loaded;
+            if (ref.current) {
+                ref.current.innerHTML = "";
             }
-        }
-    }, [scriptUrl, config, height])
+        };
+    }, [scriptUrl, JSON.stringify(config), height]);
 
-    return containerRef;
-}
-export default useTradingViewWidget
+    return ref;
+};
+
+export default useTradingViewWidget;
