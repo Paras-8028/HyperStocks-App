@@ -1,37 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-const socket = new WebSocket(
-    `wss://ws.finnhub.io?token=${process.env.NEXT_PUBLIC_FINNHUB_API_KEY}`
-);
+import { useEffect, useRef, useState } from "react";
 
 export function useLiveQuote(symbol: string) {
     const [price, setPrice] = useState<number | null>(null);
     const [percent, setPercent] = useState<number | null>(null);
-    const [prev, setPrev] = useState<number | null>(null);
+    const [direction, setDirection] = useState<"up" | "down" | null>(null);
+
+    const prevPrice = useRef<number | null>(null);
 
     useEffect(() => {
-        socket.onopen = () => {
-            socket.send(JSON.stringify({ type: "subscribe", symbol }));
-        };
+        if (!symbol) return;
 
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            const trade = data?.data?.[0];
-            if (!trade) return;
+        let active = true;
 
-            setPrice(trade.p);
-            if (prev) {
-                setPercent(((trade.p - prev) / prev) * 100);
+        async function fetchQuote() {
+            const res = await fetch(`/api/quote?symbol=${symbol}`);
+            const data = await res.json();
+
+            if (!active) return;
+
+            const newPrice = data.price;
+
+            if (prevPrice.current !== null) {
+                if (newPrice > prevPrice.current) setDirection("up");
+                if (newPrice < prevPrice.current) setDirection("down");
+
+                setTimeout(() => setDirection(null), 600);
             }
-            setPrev(trade.p);
-        };
+
+            prevPrice.current = newPrice;
+            setPrice(newPrice);
+            setPercent(data.percent);
+        }
+
+        fetchQuote();
+        const id = setInterval(fetchQuote, 30000);
 
         return () => {
-            socket.send(JSON.stringify({ type: "unsubscribe", symbol }));
+            active = false;
+            clearInterval(id);
         };
-    }, [symbol, prev]);
+    }, [symbol]);
 
-    return { price, percent };
+    return { price, percent, direction };
 }

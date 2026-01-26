@@ -1,23 +1,19 @@
-"use client";
+'use client';
+
 import { useEffect, useRef } from "react";
 
 const useTradingViewWidget = (
     scriptUrl: string,
     config: Record<string, unknown>,
-    height: number
+    height = 360
 ) => {
-    const ref = useRef<HTMLDivElement | null>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        if (!ref.current) return;
+        if (!containerRef.current) return;
 
-        // Clear previous widget safely
-        ref.current.innerHTML = "";
-
-        const widget = document.createElement("div");
-        widget.className = "tradingview-widget-container__widget";
-        widget.style.width = "100%";
-        widget.style.height = `${height}px`;
+        // Clear previous widget
+        containerRef.current.innerHTML = "";
 
         const script = document.createElement("script");
         script.src = scriptUrl;
@@ -25,17 +21,16 @@ const useTradingViewWidget = (
         script.type = "text/javascript";
         script.innerHTML = JSON.stringify(config);
 
-        ref.current.appendChild(widget);
-        ref.current.appendChild(script);
+        containerRef.current.appendChild(script);
 
         return () => {
-            if (ref.current) {
-                ref.current.innerHTML = "";
+            if (containerRef.current) {
+                containerRef.current.innerHTML = "";
             }
         };
     }, [scriptUrl, JSON.stringify(config), height]);
 
-    return ref;
+    return containerRef;
 };
 
 export default useTradingViewWidget;
