@@ -178,4 +178,21 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
         return [];
     }
 });
+export async function getStockQuote(symbol: string) {
+    if (!symbol) throw new Error("Symbol required");
+
+    const token =
+        process.env.FINNHUB_API_KEY ??
+        process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
+
+    if (!token) throw new Error("Finnhub API key missing");
+
+    const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${token}`;
+
+    return await fetchJSON<{
+        c: number; // current price
+        d: number; // change
+        dp: number; // percent change
+    }>(url, 30);
+}
 
