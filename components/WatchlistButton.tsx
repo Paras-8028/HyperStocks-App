@@ -8,34 +8,25 @@ const WatchlistButton = ({
                              company,
                              isInWatchlist,
                              type = "icon",
-                             showTrashIcon = false,
                              onWatchlistChange,
                          }: WatchlistButtonProps) => {
     const handleClick = async () => {
         try {
             const result = await toggleWatchlist(symbol, company);
-
-            // Notify parent (Search list / Watchlist row)
             onWatchlistChange?.(symbol, result.added);
         } catch (e: any) {
             toast.error(e?.message ?? "Failed to update watchlist");
         }
     };
 
-    /* ---------------- ICON BUTTON ---------------- */
     if (type === "icon") {
         return (
             <button
                 onClick={handleClick}
-                title={
-                    isInWatchlist
-                        ? `Remove ${symbol} from watchlist`
-                        : `Add ${symbol} to watchlist`
-                }
-                aria-label="Toggle watchlist"
                 className={`watchlist-icon-btn ${
                     isInWatchlist ? "watchlist-icon-added" : ""
                 }`}
+                title="Toggle watchlist"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -55,35 +46,7 @@ const WatchlistButton = ({
         );
     }
 
-    /* ---------------- FULL BUTTON ---------------- */
-    return (
-        <button
-            onClick={handleClick}
-            className={`watchlist-btn ${
-                isInWatchlist ? "watchlist-remove" : ""
-            }`}
-        >
-            {showTrashIcon && isInWatchlist && (
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-5 h-5 mr-2"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 4v6m4-6v6m4-6v6"
-                    />
-                </svg>
-            )}
-            <span>
-        {isInWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
-      </span>
-        </button>
-    );
+    return null;
 };
 
 export default WatchlistButton;
