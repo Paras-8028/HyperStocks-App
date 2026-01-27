@@ -74,37 +74,37 @@ export default function SearchCommand({
         setStocks(initialStocks);
     };
 
-    /* ⭐ Toggle Watchlist (single source of truth) */
-    const handleToggleWatchlist = async (
-        symbol: string,
-        company: string
-    ) => {
-        // Optimistic UI
-        setStocks((prev) =>
-            prev.map((s) =>
-                s.symbol === symbol
-                    ? { ...s, isInWatchlist: !s.isInWatchlist }
-                    : s
-            )
-        );
-
-        try {
-            await toggleWatchlist(symbol, company);
-        } catch (e: any) {
-            // Rollback
-            setStocks((prev) =>
-                prev.map((s) =>
-                    s.symbol === symbol
-                        ? { ...s, isInWatchlist: !s.isInWatchlist }
-                        : s
-                )
-            );
-
-            toast.error(
-                e?.message || "Failed to update watchlist"
-            );
-        }
-    };
+    // /* ⭐ Toggle Watchlist (single source of truth) */
+    // const handleToggleWatchlist = async (
+    //     symbol: string,
+    //     company: string
+    // ) => {
+    //     // Optimistic UI
+    //     setStocks((prev) =>
+    //         prev.map((s) =>
+    //             s.symbol === symbol
+    //                 ? { ...s, isInWatchlist: !s.isInWatchlist }
+    //                 : s
+    //         )
+    //     );
+    //
+    //     try {
+    //         await toggleWatchlist(symbol, company);
+    //     } catch (e: any) {
+    //         // Rollback
+    //         setStocks((prev) =>
+    //             prev.map((s) =>
+    //                 s.symbol === symbol
+    //                     ? { ...s, isInWatchlist: !s.isInWatchlist }
+    //                     : s
+    //             )
+    //         );
+    //
+    //         toast.error(
+    //             e?.message || "Failed to update watchlist"
+    //         );
+    //     }
+    // };
 
     return (
         <>
@@ -189,16 +189,18 @@ export default function SearchCommand({
                                             type="icon"
                                             symbol={stock.symbol}
                                             company={stock.name}
-                                            isInWatchlist={
-                                                stock.isInWatchlist
-                                            }
-                                            onWatchlistChange={() =>
-                                                handleToggleWatchlist(
-                                                    stock.symbol,
-                                                    stock.name
-                                                )
-                                            }
+                                            isInWatchlist={stock.isInWatchlist}
+                                            onWatchlistChange={(symbol, added) => {
+                                                setStocks(prev =>
+                                                    prev.map(s =>
+                                                        s.symbol === symbol
+                                                            ? { ...s, isInWatchlist: added }
+                                                            : s
+                                                    )
+                                                );
+                                            }}
                                         />
+
                                     </div>
                                 </li>
                             ))}

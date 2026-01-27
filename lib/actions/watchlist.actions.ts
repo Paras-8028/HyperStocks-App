@@ -145,15 +145,18 @@ export async function removeFromWatchlist(symbol: string) {
 /* =====================================================
    TOGGLE (used by ⭐ button)
 ===================================================== */
-
 export async function toggleWatchlist(
     symbol: string,
     company: string
 ): Promise<{ added: boolean }> {
-    const { userId } = await resolveCurrentUser();
-    const upper = symbol.toUpperCase();
+    const { userId } = await resolveCurrentUser(); // ✅ FIXED
 
-    const existing = await Watchlist.findOne({ userId, symbol: upper });
+    const normalized = symbol.toUpperCase();
+
+    const existing = await Watchlist.findOne({
+        userId,
+        symbol: normalized,
+    });
 
     if (existing) {
         await Watchlist.deleteOne({ _id: existing._id });
@@ -167,9 +170,11 @@ export async function toggleWatchlist(
 
     await Watchlist.create({
         userId,
-        symbol: upper,
+        symbol: normalized,
         company,
     });
 
     return { added: true };
 }
+
+

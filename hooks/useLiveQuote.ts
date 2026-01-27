@@ -1,46 +1,30 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { finnhubWS } from "@/lib/finnhub/ws";
 
 export function useLiveQuote(symbol: string) {
     const [price, setPrice] = useState<number | null>(null);
     const [percent, setPercent] = useState<number | null>(null);
     const [direction, setDirection] = useState<"up" | "down" | null>(null);
 
-    const prevPrice = useRef<number | null>(null);
+    const lastPrice = useRef<number | null>(null);
 
     useEffect(() => {
         if (!symbol) return;
 
-        let active = true;
+        const unsubscribe = finnhubWS.subscribe(symbol, ({ price }) => {
+            setPrice(prev => {
+                if (prev !== null) {
+                    setDirection(price > prev ? "up" : "down");
+                    setPercent(((price - prev) / prev) * 100);
+                }
+                lastPrice.current = price;
+                return price;
+            });
+        });
 
-        async function fetchQuote() {
-            const res = await fetch(`/api/quote?symbol=${symbol}`);
-            const data = await res.json();
-
-            if (!active) return;
-
-            const newPrice = data.price;
-
-            if (prevPrice.current !== null) {
-                if (newPrice > prevPrice.current) setDirection("up");
-                if (newPrice < prevPrice.current) setDirection("down");
-
-                setTimeout(() => setDirection(null), 600);
-            }
-
-            prevPrice.current = newPrice;
-            setPrice(newPrice);
-            setPercent(data.percent);
-        }
-
-        fetchQuote();
-        const id = setInterval(fetchQuote, 30000);
-
-        return () => {
-            active = false;
-            clearInterval(id);
-        };
+        return unsubscribe;
     }, [symbol]);
 
     return { price, percent, direction };
