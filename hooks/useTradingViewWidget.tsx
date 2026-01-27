@@ -1,39 +1,47 @@
 "use client";
 import { useEffect, useRef } from "react";
 
+declare global {
+    interface Window {
+        TradingView: any;
+    }
+}
+
 const useTradingViewWidget = (
     scriptUrl: string,
-    config: Record<string, unknown>,
+    config: Record<string, any>,
     height: number
 ) => {
-    const ref = useRef<HTMLDivElement | null>(null);
+    const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!ref.current) return;
 
-        // Clear previous widget safely
         ref.current.innerHTML = "";
-
-        const widget = document.createElement("div");
-        widget.className = "tradingview-widget-container__widget";
-        widget.style.width = "100%";
-        widget.style.height = `${height}px`;
+        const id = `tv-${Math.random()}`;
+        ref.current.id = id;
 
         const script = document.createElement("script");
         script.src = scriptUrl;
         script.async = true;
-        script.type = "text/javascript";
-        script.innerHTML = JSON.stringify(config);
 
-        ref.current.appendChild(widget);
-        ref.current.appendChild(script);
+        script.onload = () => {
+            if (!window.TradingView) return;
+
+            new window.TradingView.widget({
+                container_id: id,
+                width: "100%",
+                height,
+                ...config,
+            });
+        };
+
+        document.body.appendChild(script);
 
         return () => {
-            if (ref.current) {
-                ref.current.innerHTML = "";
-            }
+            ref.current && (ref.current.innerHTML = "");
         };
-    }, [scriptUrl, JSON.stringify(config), height]);
+    }, [scriptUrl, height, JSON.stringify(config)]);
 
     return ref;
 };
