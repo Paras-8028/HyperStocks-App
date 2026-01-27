@@ -1,17 +1,19 @@
 "use client";
 
-import { memo } from "react";
+import useTradingViewWidget from "@/hooks/useTradingViewWidget";
 
-const MiniChart = ({ symbol }: { symbol: string }) => {
-    return (
-        <iframe
-            key={symbol}
-            src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_${symbol}&symbol=NASDAQ:${symbol}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=141414&studies=[]&theme=dark&style=1&timezone=Etc/UTC`}
-            className="w-full h-[120px] rounded-md border border-gray-800"
-            style={{ background: "#141414" }}
-            loading="lazy"
-        />
+export default function MiniChart({ symbol }: { symbol: string }) {
+    const ref = useTradingViewWidget(
+        "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js",
+        {
+            symbol: `NASDAQ:${symbol}`,
+            locale: "en",
+            dateRange: "1M",
+            colorTheme: "dark",
+            isTransparent: true,
+            autosize: true,
+        }
     );
-};
 
-export default memo(MiniChart);
+    return <div ref={ref} className="w-full h-[120px]" />;
+}

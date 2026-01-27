@@ -126,6 +126,9 @@ export async function addToWatchlist(symbol: string, company: string) {
     }
 }
 
+/* =====================================================
+   REMOVE FROM WATCHLIST
+===================================================== */
 export async function removeFromWatchlist(symbol: string) {
     try {
         const { userId } = await resolveCurrentUser();
@@ -137,19 +140,20 @@ export async function removeFromWatchlist(symbol: string) {
 
         return { success: true };
     } catch (err) {
-        console.error('removeFromWatchlist error:', err);
-        return { success: false, error: 'Failed to remove from watchlist' };
+        console.error("removeFromWatchlist error:", err);
+        throw new Error("Failed to remove from watchlist");
     }
 }
 
+
 /* =====================================================
-   TOGGLE (used by ⭐ button)
+   TOGGLE WATCHLIST ⭐
 ===================================================== */
 export async function toggleWatchlist(
     symbol: string,
     company: string
 ): Promise<{ added: boolean }> {
-    const { userId } = await resolveCurrentUser(); // ✅ FIXED
+    const { userId } = await resolveCurrentUser();
 
     const normalized = symbol.toUpperCase();
 
@@ -165,7 +169,7 @@ export async function toggleWatchlist(
 
     const count = await Watchlist.countDocuments({ userId });
     if (count >= MAX_WATCHLIST_ITEMS) {
-        throw new Error(`Watchlist limit reached (${MAX_WATCHLIST_ITEMS})`);
+        throw new Error("Watchlist limit reached (50)");
     }
 
     await Watchlist.create({
@@ -176,5 +180,3 @@ export async function toggleWatchlist(
 
     return { added: true };
 }
-
-
