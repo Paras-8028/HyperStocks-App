@@ -7,6 +7,8 @@ import WatchlistButton from "@/components/WatchlistButton";
 import { useLiveQuote } from "@/hooks/useLiveQuote";
 import { cn } from "@/lib/utils";
 import WatchlistAlertList from "./WatchlistAlertList";
+import { createAlert } from "@/lib/actions/alert.actions";
+import { toast } from "sonner";
 
 const WatchlistRow = ({
                           item,
@@ -19,6 +21,37 @@ const WatchlistRow = ({
     const [expanded, setExpanded] = useState(false);
 
     const isUp = (percent ?? 0) >= 0;
+
+    const [targetPrice, setTargetPrice] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const handleAddAlert = async () => {
+        if (!price) {
+            toast.error("Live price not available");
+            return;
+        }
+
+        const target = Number(targetPrice);
+        if (!target || target <= 0) {
+            toast.error("Enter a valid target price");
+            return;
+        }
+
+        const condition = target > price ? "above" : "below";
+
+        try {
+            setLoading(true);
+            await createAlert(item.symbol, condition, target);
+            toast.success(`Alert set ${condition} $${target}`);
+            setTargetPrice("");
+        } catch (e: any) {
+            toast.error(e?.message || "Failed to create alert");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
 
     return (
         <div className="rounded-xl border border-gray-800 bg-gradient-to-b from-black to-gray-900 p-5 space-y-5">
@@ -93,8 +126,28 @@ const WatchlistRow = ({
                 <span className="text-gray-500">Alerts</span>
             </div>
 
-            {/* ALERTS */}
+            {/* ALERT INPUT */}
+            <div className="flex items-center gap-3">
+                <input
+                    type="number"
+                    value={targetPrice}
+                    onChange={(e) => setTargetPrice(e.target.value)}
+                    placeholder="Target price"
+                    className="w-32 px-3 py-2 rounded-md bg-black border border-gray-700 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                />
+
+                <button
+                    onClick={handleAddAlert}
+                    disabled={loading}
+                    className="px-4 py-2 rounded-md bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400 disabled:opacity-50"
+                >
+                    {loading ? "Adding..." : "Add alert"}
+                </button>
+            </div>
+
+            {/* ALERT LIST */}
             <WatchlistAlertList symbol={item.symbol} />
+
         </div>
     );
 };

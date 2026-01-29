@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/database/mongoose";
 import { AlertModel } from "@/database/models/alert.model";
 import { auth } from "@/lib/better-auth/auth";
 import { headers } from "next/headers";
+import { getStockQuote } from "@/lib/actions/finnhub.actions";
 
 /* --------------------------------------------------
    Helper: get current user
@@ -44,8 +45,9 @@ export async function createAlert(
         symbol: symbol.toUpperCase(),
         condition,
         targetPrice,
-        triggered: false,
+        status: "active",
     });
+
 
     return { success: true };
 }

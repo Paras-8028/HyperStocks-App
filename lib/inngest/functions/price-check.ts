@@ -1,54 +1,39 @@
 import { inngest } from "@/lib/inngest/client";
-import { connectToDatabase } from "@/database/mongoose";
 import { AlertModel } from "@/database/models/alert.model";
-import { fetchJSON } from "@/lib/actions/finnhub.actions";
+import { getStockQuote } from "@/lib/actions/finnhub.actions";
 import { sendAlertEmail } from "@/lib/nodemailer";
+import { connectToDatabase } from "@/database/mongoose";
 
 export const checkPriceAlerts = inngest.createFunction(
-    { id: "price-alert-checker" },
-    { cron: "*/5 * * * *" }, // every 5 minutes
+    { id: "price-alert-check" },
+    { cron: "*/2 * * * *" },
     async () => {
-        const mongoose = await connectToDatabase();
-        const db = mongoose.connection.db!;
-        const alerts = await AlertModel.find({ triggered: false });
+        await connectToDatabase();
+
+        const alerts = await AlertModel.find({ status: "active" });
 
         for (const alert of alerts) {
-            const data = await fetchJSON<any>(
-                `https://finnhub.io/api/v1/quote?symbol=${alert.symbol}&token=${process.env.NEXT_PUBLIC_FINNHUB_API_KEY}`
-            );
+            const quote = await getStockQuote(alert.symbol);
+            const currentPrice = quote.c;
 
-            const currentPrice = data?.c;
-            if (!currentPrice) continue;
+            const hit =
+                alert.condition === "above"
+                    ? currentPrice >= alert.targetPrice
+                    : currentPrice <= alert.targetPrice;
 
-            const shouldTrigger =
-                (alert.condition === "above" &&
-                    currentPrice >= alert.targetPrice) ||
-                (alert.condition === "below" &&
-                    currentPrice <= alert.targetPrice);
+            if (!hit) continue;
 
-            if (!shouldTrigger) continue;
-
-            // Mark alert as triggered
-            alert.triggered = true;
-            await alert.save();
-
-            // Get user email
-            const user = await db
-                .collection("user")
-                .findOne({ id: alert.userId });
-
-            if (!user?.email) continue;
-
-            // Send alert email
+            // Send email
             await sendAlertEmail({
-                email: user.email,
+                email: alert.userId, // see NOTE below
                 symbol: alert.symbol,
                 price: currentPrice,
                 target: alert.targetPrice,
                 condition: alert.condition,
             });
-        }
 
-        return { success: true };
+            // DELETE after trigger (your requirement)
+            await AlertModel.deleteOne({ _id: alert._id });
+        }
     }
 );

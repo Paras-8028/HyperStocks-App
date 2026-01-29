@@ -1,11 +1,12 @@
-import { Schema, model, models, type Document, type Model } from "mongoose";
+import { Schema, model, models } from "mongoose";
 
-export interface Alert extends Document {
+export interface Alert {
     userId: string;
     symbol: string;
-    condition: "above" | "below";
     targetPrice: number;
-    triggered: boolean;
+    condition: "above" | "below";
+    status: "active" | "triggered";
+    triggeredAt?: Date;
     createdAt: Date;
 }
 
@@ -13,15 +14,17 @@ const AlertSchema = new Schema<Alert>(
     {
         userId: { type: String, required: true, index: true },
         symbol: { type: String, required: true, uppercase: true },
-        condition: { type: String, enum: ["above", "below"], required: true },
         targetPrice: { type: Number, required: true },
-        triggered: { type: Boolean, default: false },
-        createdAt: { type: Date, default: Date.now },
+        condition: { type: String, enum: ["above", "below"], required: true },
+        status: {
+            type: String,
+            enum: ["active", "triggered"],
+            default: "active",
+        },
+        triggeredAt: Date,
     },
-    { timestamps: false }
+    { timestamps: { createdAt: true, updatedAt: false } }
 );
 
-AlertSchema.index({ userId: 1, symbol: 1, triggered: 1 });
-
-export const AlertModel: Model<Alert> =
+export const AlertModel =
     models.Alert || model<Alert>("Alert", AlertSchema);
