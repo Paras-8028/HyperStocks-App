@@ -111,7 +111,7 @@ export default function SearchCommand({
             {renderAs === "text" ? (
                 <span
                     onClick={() => setOpen(true)}
-                    className="font-medium cursor-pointer transition-colors hover:text-yellow-500"
+                    className="font-medium cursor-pointer transition-colors hover:text-green-400"
                 >
                     {label}
                 </span>

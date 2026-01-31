@@ -34,7 +34,7 @@ export default function WatchlistTabs({
                         className={cn(
                             "pb-3 text-sm font-medium transition-colors",
                             active === tab
-                                ? "text-yellow-500 border-b-2 border-yellow-500"
+                                ? "text-green-500 border-b-2 border-green-500"
                                 : "text-gray-400 hover:text-gray-200"
                         )}
                     >
