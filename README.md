@@ -1,36 +1,131 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+📈 HyperStocks – Real-Time Stock Market Dashboard
 
-## Getting Started
 
-First, run the development server:
+🚀 Overview
 
-```bash
+HyperStocks is a modern, responsive stock market dashboard built using Next.js, React, and TypeScript, integrating TradingView widgets for real-time market data visualization.
+It provides a clean UI, smooth performance, and reusable components suitable for fintech dashboards.
+
+✨ Features
+
+📊 Real-time interactive stock charts
+
+🎯 Custom widget titles (independent of TradingView headers)
+
+🌙 Dark-theme friendly UI
+
+📱 Fully responsive layout
+
+🧩 Reusable React components
+
+⚡ Optimized TradingView script loading
+
+🛡️ Prevents duplicate widget rendering
+
+🛠️ Tech Stack
+Category	Technologies
+Frontend	Next.js (App Router), React
+Language	TypeScript
+Styling	Tailwind CSS
+Charts	TradingView Embedded Widgets
+Tools	GitHub, VS Code
+📂 Project Structure
+hyperstocks/
+│
+├── app/
+│   └── (root)/
+│       └── page.tsx
+│
+├── components/
+│   └── TradingViewWidget.tsx
+│
+├── hooks/
+│   └── useTradingViewWidget.tsx
+│
+├── lib/
+│   └── utils.ts
+│
+├── public/
+│
+└── README.md
+
+🧠 Core Implementation
+🔹 TradingViewWidget Component
+
+Displays TradingView charts
+
+Accepts dynamic configuration
+
+Supports custom titles
+
+Fully responsive
+
+🔹 useTradingViewWidget Hook
+
+Injects TradingView scripts safely
+
+Prevents duplicate widget loads
+
+Cleans up scripts on unmount
+
+Designed for Next.js client components
+
+🧪 Challenges & Solutions
+Challenge	Solution
+TradingView title not rendering	Implemented custom titles outside widgets
+Duplicate widget loading	Controlled script injection via custom hook
+Layout clipping issues	Removed overflow restrictions
+Next.js SSR conflicts	Used "use client" & DOM-safe hooks
+📸 Screenshots
+
+(Add dashboard screenshots here)
+
+🔮 Future Enhancements
+
+🔐 User authentication
+
+⭐ Stock watchlist
+
+🔎 Symbol search & selector
+
+🌗 Light/Dark theme toggle
+
+📈 Technical indicators & analytics
+
+🌍 Multi-market support
+
+⚙️ Installation & Setup
+git clone https://github.com/your-username/hyperstocks.git
+cd hyperstocks
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Open 👉 http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+📌 Use Case
 
-## Learn More
+FinTech dashboards
 
-To learn more about Next.js, take a look at the following resources:
+Stock analysis platforms
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Learning project for React + Next.js
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+College mini/major project
 
-## Deploy on Vercel
+🤝 Contributing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Contributions are welcome!
+Feel free to fork this repository and submit a pull request.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+📄 License
+
+This project is licensed under the MIT License.
+
+👨‍💻 Author
+
+Maharudra Patil
+
+🔗 LinkedIn: https://linkedin.com/in/maharudra-patil
+
+💻 GitHub: https://github.com/Paras-8028
