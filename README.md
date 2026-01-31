@@ -39,11 +39,9 @@ The project focuses on clean UI design, performance, and scalable component arch
 | Tools | GitHub, VS Code |
 
 ---
-
 ## 📂 Project Structure
 
 hyperstocks/
-│
 ├── app/
 │ └── (root)/
 │ └── page.tsx
@@ -92,7 +90,7 @@ Next.js SSR conflicts | Used `"use client"` and DOM-safe hooks |
 
 ## 📸 Screenshots
 
-![HyperStocks Dashboard]([https://your-image-url-here](https://ik.imagekit.io/ParasPatil/Pho3.jpg?updatedAt=1769104129172))
+![Dashboard](./public/screenshots/dashboard.png)
 
 ---
 
