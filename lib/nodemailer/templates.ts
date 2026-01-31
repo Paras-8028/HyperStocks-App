@@ -151,8 +151,8 @@ export const WELCOME_EMAIL_TEMPLATE = `<!DOCTYPE html>
                             <!-- Footer Text -->
                             <p class="mobile-text dark-text-muted" style="margin: 40px 0 0 0; font-size: 14px; line-height: 1.5; color: #CCDADC !important; text-align: center;">
                                HyperStocks HQ, 200 Market Street, San Francisco, CA 94105<br>
-                                <a href="#" style="color: #CCDADC !important; text-decoration: underline;">Unsubscribe</a> | 
-                                <a href="/" style="color: #CCDADC !important; text-decoration: underline;">Visit HyperStocks</a><br>
+                                <a href="https://hyper-stocks-app.vercel.app" style="color: #CCDADC !important; text-decoration: underline;">Unsubscribe</a> | 
+                                <a href="https://hyper-stocks-app.vercel.app" style="color: #CCDADC !important; text-decoration: underline;">Visit HyperStocks</a><br>
                                 © 2026 HyperStocks
                             </p>
                         </td>
@@ -288,7 +288,7 @@ export const NEWS_SUMMARY_EMAIL_TEMPLATE = `<!DOCTYPE html>
                                 </p>
                                 <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.5; color: #CCDADC !important;">
                                     <a href="#" style="color: #CCDADC !important; text-decoration: underline;">Unsubscribe</a> | 
-                                    <a href="https://HyperStocks.app" style="color: #CCDADC !important; text-decoration: underline;">Visit HyperStocks</a>
+                                    <a href="https://hyper-stocks-app.vercel.app" style="color: #CCDADC !important; text-decoration: underline;">Visit HyperStocks</a>
                                 </p>
                                 <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #CCDADC !important;">
                                     © 2026 HyperStocks
@@ -483,7 +483,7 @@ export const STOCK_ALERT_UPPER_EMAIL_TEMPLATE = `<!DOCTYPE html>
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 30px;">
                                 <tr>
                                     <td align="center">
-                                        <a href="https://stock-market-dev.vercel.app/" style="display: block; width: 100%; max-width: 100%; box-sizing: border-box; color: #000000; background-color: #E8BA40; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-size: 16px; font-weight: 500; line-height: 1; text-align: center;">
+                                        <a href="https://hyper-stocks-app.vercel.app" style="display: block; width: 100%; max-width: 100%; box-sizing: border-box; color: #000000; background-color: #E8BA40; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-size: 16px; font-weight: 500; line-height: 1; text-align: center;">
                                             View Dashboard
                                         </a>
                                     </td>
@@ -496,8 +496,8 @@ export const STOCK_ALERT_UPPER_EMAIL_TEMPLATE = `<!DOCTYPE html>
                                     You're receiving this because you subscribed to HyperStocks news updates.
                                 </p>
                                 <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.5; color: #CCDADC !important;">
-                                    <a href="#" style="color: #CCDADC !important; text-decoration: underline;">Unsubscribe</a> | 
-                                    <a href="https://HyperStocks.app" style="color: #CCDADC !important; text-decoration: underline;">Visit HyperStocks</a>
+                                    <a href="https://hyper-stocks-app.vercel.app" style="color: #CCDADC !important; text-decoration: underline;">Unsubscribe</a> | 
+                                    <a href="https://hyper-stocks-app.vercel.app" style="color: #CCDADC !important; text-decoration: underline;">Visit HyperStocks</a>
                                 </p>
                                 <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #CCDADC !important;">
                                     © 2026 HyperStocks
@@ -692,7 +692,7 @@ export const STOCK_ALERT_LOWER_EMAIL_TEMPLATE = `<!DOCTYPE html>
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 30px;">
                                 <tr>
                                     <td align="center">
-                                        <a href="https://stock-market-dev.vercel.app/" style="display: block; width: 100%; max-width: 100%; box-sizing: border-box; background-color: #E8BA40; color: #000000; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-size: 16px; font-weight: 500; line-height: 1; text-align: center;">
+                                        <a href="https://hyper-stocks-app.vercel.app" style="display: block; width: 100%; max-width: 100%; box-sizing: border-box; background-color: #E8BA40; color: #000000; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-size: 16px; font-weight: 500; line-height: 1; text-align: center;">
                                             View Dashboard
                                         </a>
                                     </td>
@@ -705,8 +705,8 @@ export const STOCK_ALERT_LOWER_EMAIL_TEMPLATE = `<!DOCTYPE html>
                                     You're receiving this because you subscribed to HyperStocks news updates.
                                 </p>
                                 <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.5; color: #CCDADC !important;">
-                                    <a href="#" style="color: #CCDADC !important; text-decoration: underline;">Unsubscribe</a> | 
-                                    <a href="https://HyperStocks.app" style="color: #CCDADC !important; text-decoration: underline;">Visit HyperStocks</a>
+                                    <a href="https://hyper-stocks-app.vercel.app" style="color: #CCDADC !important; text-decoration: underline;">Unsubscribe</a> | 
+                                    <a href="https://hyper-stocks-app.vercel.app" style="color: #CCDADC !important; text-decoration: underline;">Visit HyperStocks</a>
                                 </p>
                                 <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #CCDADC !important;">
                                     © 2026 HyperStocks
@@ -905,7 +905,7 @@ export const VOLUME_ALERT_EMAIL_TEMPLATE = `<!DOCTYPE html>
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 30px;">
                                 <tr>
                                     <td align="center">
-                                        <a href="https://stock-market-dev.vercel.app/" style="display: inline-block; background-color: #E8BA40; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-size: 16px; font-weight: 500; line-height: 1;">
+                                        <a href="https://hyper-stocks-app.vercel.app" style="display: inline-block; background-color: #E8BA40; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-size: 16px; font-weight: 500; line-height: 1;">
                                             View Dashboard
                                         </a>
                                     </td>
@@ -925,8 +925,8 @@ export const VOLUME_ALERT_EMAIL_TEMPLATE = `<!DOCTYPE html>
                                     You're receiving this because you subscribed to HyperStocks news updates.
                                 </p>
                                 <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.5; color: #CCDADC !important;">
-                                    <a href="#" style="color: #CCDADC !important; text-decoration: underline;">Unsubscribe</a> | 
-                                    <a href="https://HyperStocks.app" style="color: #CCDADC !important; text-decoration: underline;">Visit HyperStocks</a>
+                                    <a href="https://hyper-stocks-app.vercel.app" style="color: #CCDADC !important; text-decoration: underline;">Unsubscribe</a> | 
+                                    <a href="https://hyper-stocks-app.vercel.app" style="color: #CCDADC !important; text-decoration: underline;">Visit HyperStocks</a>
                                 </p>
                                 <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #CCDADC !important;">
                                     © 2026 HyperStocks
@@ -1079,7 +1079,7 @@ export const INACTIVE_USER_REMINDER_EMAIL_TEMPLATE = `<!DOCTYPE html>
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 0 20px 0; width: 100%;">
                                 <tr>
                                     <td align="center" class="mobile-button">
-                                        <a href="{{dashboardUrl}}" style="display: inline-block; background: #E8BA40; color: #000000; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-size: 16px; font-weight: 500; line-height: 1; text-align: center;  width: 100%;">
+                                        <a href="https://hyper-stocks-app.vercel.app" style="display: inline-block; background: #E8BA40; color: #000000; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-size: 16px; font-weight: 500; line-height: 1; text-align: center;  width: 100%;">
                                             Return to Dashboard
                                         </a>
                                     </td>
@@ -1092,8 +1092,8 @@ export const INACTIVE_USER_REMINDER_EMAIL_TEMPLATE = `<!DOCTYPE html>
                                     Questions? Reply to this email or contact our support team.
                                 </p>
                                 <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.5; color: #CCDADC !important;">
-                                    <a href="{{unsubscribeUrl}}" style="color: #CCDADC !important; text-decoration: underline;">Unsubscribe</a> | 
-                                    <a href="{{dashboardUrl}}" style="color: #CCDADC !important; text-decoration: underline;">Visit HyperStocks</a>
+                                    <a href="https://hyper-stocks-app.vercel.app" style="color: #CCDADC !important; text-decoration: underline;">Unsubscribe</a> | 
+                                    <a href="https://hyper-stocks-app.vercel.app" style="color: #CCDADC !important; text-decoration: underline;">Visit HyperStocks</a>
                                 </p>
                                 <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #CCDADC !important;">
                                     © 2026 HyperStocks

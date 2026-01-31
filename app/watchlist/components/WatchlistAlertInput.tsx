@@ -44,7 +44,7 @@ export default function WatchlistAlertInput({
 
             <button
                 onClick={submit}
-                className="px-3 py-2 bg-yellow-500 text-black rounded text-sm font-medium"
+                className="px-3 py-2 bg-green-500 text-black rounded text-sm font-medium"
             >
                 Add
             </button>

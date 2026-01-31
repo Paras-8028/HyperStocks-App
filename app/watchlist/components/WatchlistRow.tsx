@@ -118,7 +118,7 @@ const WatchlistRow = ({
             <div className="flex items-center justify-between text-sm">
                 <button
                     onClick={() => setExpanded(v => !v)}
-                    className="text-yellow-400 hover:underline"
+                    className="text-green-400 hover:underline"
                 >
                     {expanded ? "Hide full chart" : "View full chart"}
                 </button>
@@ -133,13 +133,13 @@ const WatchlistRow = ({
                     value={targetPrice}
                     onChange={(e) => setTargetPrice(e.target.value)}
                     placeholder="Target price"
-                    className="w-32 px-3 py-2 rounded-md bg-black border border-gray-700 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                    className="w-32 px-3 py-2 rounded-md bg-black border border-gray-700 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-green-500"
                 />
 
                 <button
                     onClick={handleAddAlert}
                     disabled={loading}
-                    className="px-4 py-2 rounded-md bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400 disabled:opacity-50"
+                    className="px-4 py-2 rounded-md bg-green-500 text-black text-sm font-medium hover:bg-green-400 disabled:opacity-50"
                 >
                     {loading ? "Adding..." : "Add alert"}
                 </button>
