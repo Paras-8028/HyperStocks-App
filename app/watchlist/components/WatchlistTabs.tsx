@@ -44,7 +44,6 @@ export default function WatchlistTabs({
             </div>
 
             {/* Tabs Content */}
-
             {active === "Watchlist" && (
                 <WatchlistTable items={items} />
             )}
