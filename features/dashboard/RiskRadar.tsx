@@ -1,40 +1,50 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { usePersonalization } from '@/context/PersonalizationContext';
 import { RiskRadarItem } from '@/types/ai';
-import { AlertOctagon, AlertTriangle, ArrowRight, ShieldAlert, ShieldCheck } from 'lucide-react';
+import {
+    AlertOctagon,
+    AlertTriangle,
+    ArrowRight,
+    Shield,
+    ShieldAlert,
+    ShieldCheck,
+} from 'lucide-react';
 import Link from 'next/link';
 
 export function RiskRadar({ className = '' }: { className?: string }) {
-    const risks: RiskRadarItem[] = [
-        {
-            id: 'risk-1',
-            category: 'concentration',
-            severity: 'warning',
-            title: 'Technology Sector Concentration > 42%',
-            description: 'Your combined holdings and watchlist have heavy exposure to AI semiconductors and mega-cap tech. A macro multiples contraction would disproportionately affect net performance.',
-            affectedSymbols: ['NVDA', 'AAPL', 'MSFT'],
-            suggestedAction: 'Consider diversifying into defensive dividend healthcare (e.g. JNJ, LLY) or short-duration treasuries.',
-        },
-        {
-            id: 'risk-2',
-            category: 'volatility',
-            severity: 'critical',
-            title: 'Implied Volatility Surge Ahead of Fed Meeting',
-            description: '30-day VIX forward curve shows backwardation. Short-term options pricing indicates heightened tail-risk expectations across the S&P 500.',
-            affectedSymbols: ['SPY', 'QQQ'],
-            suggestedAction: 'Review stop-loss levels and ensure active price alerts are configured for high-beta holdings.',
-        },
-        {
-            id: 'risk-3',
-            category: 'sentiment',
-            severity: 'advisory',
-            title: 'Energy Sector Regulatory & Pricing Drag',
-            description: 'Negative sentiment score (-0.45) across fossil fuel producers due to international supply additions and refinery utilization cuts.',
-            affectedSymbols: ['XOM', 'CVX'],
-            suggestedAction: 'Hold back on fresh long entries until crude inventories show inventory draw stabilization.',
-        },
-    ];
+    const { preferences } = usePersonalization();
+    const [risks, setRisks] = useState<RiskRadarItem[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        let isMounted = true;
+        setLoading(true);
+
+        fetch('/api/personalization/feed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                preferences,
+                watchlistSymbols: preferences.favoriteStocks || [],
+            }),
+        })
+            .then((r) => r.json())
+            .then((data) => {
+                if (isMounted && data.success && data.data?.risks) {
+                    setRisks(data.data.risks);
+                }
+            })
+            .catch(() => {})
+            .finally(() => {
+                if (isMounted) setLoading(false);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [preferences]);
 
     const severityConfig: Record<RiskRadarItem['severity'], { border: string; bg: string; text: string; icon: any }> = {
         critical: {
@@ -57,61 +67,76 @@ export function RiskRadar({ className = '' }: { className?: string }) {
         },
     };
 
+    const isConservative = preferences.riskTolerance === 'conservative' || preferences.riskTolerance === 'Low';
+
     return (
         <div className={`space-y-4 ${className}`}>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-                        <ShieldAlert className="h-5 w-5 text-rose-400" />
-                        Risk & Volatility Radar
+                        <ShieldAlert className="h-5 w-5 text-amber-400" />
+                        AI Risk Radar & Exposure Matrix
                     </h2>
                     <p className="text-xs text-gray-400">
-                        Automated surveillance of portfolio exposure, volatility spikes, and downside asymmetric risks
+                        Evaluated under a{' '}
+                        <span className="text-amber-300 font-semibold">{preferences.riskTolerance}</span> risk profile
+                        {isConservative && ' (High Sensitivity Mode Active)'}
                     </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400">
+                        Profile Sensitivity:{' '}
+                        <span className={`font-semibold ${isConservative ? 'text-rose-400' : 'text-emerald-400'}`}>
+                            {isConservative ? 'High (Capital Preservation)' : 'Standard'}
+                        </span>
+                    </span>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {risks.map((risk) => {
-                    const cfg = severityConfig[risk.severity];
+                {risks.slice(0, 3).map((risk) => {
+                    const cfg = severityConfig[risk.severity] || severityConfig.warning;
                     const Icon = cfg.icon;
 
                     return (
                         <div
                             key={risk.id}
-                            className={`rounded-2xl border ${cfg.border} ${cfg.bg} p-5 backdrop-blur space-y-3 shadow-lg flex flex-col justify-between`}
+                            className={`flex flex-col justify-between rounded-2xl border ${cfg.border} ${cfg.bg} p-5 backdrop-blur shadow-lg space-y-4 transition hover:scale-[1.01]`}
                         >
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Icon className={`h-4 w-4 ${cfg.text}`} />
+                                        <span className={`text-xs font-bold uppercase tracking-wider ${cfg.text}`}>
+                                            {risk.category} Risk
+                                        </span>
+                                    </div>
                                     <span
-                                        className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${cfg.border} ${cfg.text}`}
+                                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${cfg.border} ${cfg.text}`}
                                     >
-                                        <Icon className="h-3 w-3" />
-                                        {risk.severity} risk
-                                    </span>
-                                    <span className="text-[11px] text-gray-500 capitalize">
-                                        {risk.category}
+                                        {risk.severity}
                                     </span>
                                 </div>
 
-                                <h4 className="text-sm font-bold text-gray-100 leading-snug">
+                                <h3 className="text-sm font-bold text-gray-100 leading-snug">
                                     {risk.title}
-                                </h4>
+                                </h3>
 
-                                <p className="text-xs text-gray-300 leading-relaxed">
+                                <p className="text-xs text-gray-300 leading-relaxed font-normal">
                                     {risk.description}
                                 </p>
 
                                 {risk.affectedSymbols && risk.affectedSymbols.length > 0 && (
                                     <div className="flex items-center gap-1.5 pt-1">
-                                        <span className="text-[11px] text-gray-400">Exposed Tickers:</span>
+                                        <span className="text-[11px] text-gray-400">Affected:</span>
                                         {risk.affectedSymbols.map((sym) => (
                                             <Link
                                                 key={sym}
                                                 href={`/stocks/${sym}`}
-                                                className="text-[11px] font-bold text-gray-200 hover:text-emerald-400 px-1.5 py-0.5 bg-gray-800 rounded"
+                                                className="text-[11px] font-mono font-bold text-gray-200 bg-gray-800/80 hover:bg-gray-700 px-2 py-0.5 rounded border border-gray-700 transition"
                                             >
-                                                {sym}
+                                                ${sym}
                                             </Link>
                                         ))}
                                     </div>
@@ -119,11 +144,11 @@ export function RiskRadar({ className = '' }: { className?: string }) {
                             </div>
 
                             {risk.suggestedAction && (
-                                <div className="pt-2.5 border-t border-gray-800/80 text-xs">
-                                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-                                        Recommended Action:
+                                <div className="pt-3 border-t border-gray-800/60 space-y-1">
+                                    <div className="text-[11px] font-semibold text-emerald-400">
+                                        AI Suggested Defense:
                                     </div>
-                                    <p className="text-[11px] text-gray-300 leading-snug">
+                                    <p className="text-[11px] text-gray-300 leading-relaxed">
                                         {risk.suggestedAction}
                                     </p>
                                 </div>

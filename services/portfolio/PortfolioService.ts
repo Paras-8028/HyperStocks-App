@@ -135,40 +135,8 @@ export class PortfolioService implements IPortfolioService {
     async calculatePortfolioSummary(
         positions: PortfolioPosition[]
     ): Promise<PortfolioSummary> {
-        let totalValue = 0;
-        let totalCost = 0;
-        let topPerformer: PortfolioSummary['topPerformer'] = undefined;
-        let worstPerformer: PortfolioSummary['worstPerformer'] = undefined;
-        const sectorAllocation: Record<string, number> = {};
-
-        for (const pos of positions) {
-            const mv = pos.marketValue ?? pos.shares * (pos.currentPrice ?? pos.costBasis);
-            const tc = pos.totalCost ?? pos.shares * pos.costBasis;
-            totalValue += mv;
-            totalCost += tc;
-
-            const gainPercent = pos.unrealizedGainLossPercent ?? 0;
-            if (!topPerformer || gainPercent > topPerformer.gainPercent) {
-                topPerformer = { symbol: pos.symbol, gainPercent };
-            }
-            if (!worstPerformer || gainPercent < worstPerformer.lossPercent) {
-                worstPerformer = { symbol: pos.symbol, lossPercent: gainPercent };
-            }
-        }
-
-        const totalUnrealizedGainLoss = totalValue - totalCost;
-        const totalGainLossPercent =
-            totalCost > 0 ? (totalUnrealizedGainLoss / totalCost) * 100 : 0;
-
-        return {
-            totalValue,
-            totalCost,
-            totalUnrealizedGainLoss,
-            totalGainLossPercent,
-            positionCount: positions.length,
-            topPerformer,
-            worstPerformer,
-            sectorAllocation,
-        };
+        const { PortfolioAnalyticsService } = await import('./PortfolioAnalyticsService');
+        const analysis = PortfolioAnalyticsService.analyze(positions);
+        return analysis.summary;
     }
 }

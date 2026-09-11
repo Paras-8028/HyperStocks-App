@@ -1,6 +1,6 @@
 import TradingViewWidget from "@/components/TradingViewWidget";
 import WatchlistButton from "@/components/WatchlistButton";
-import { StockIntelligenceSummary } from "@/features/stock-analysis/StockIntelligenceSummary";
+import { StockIntelligencePage } from "@/features/stock-analysis/StockIntelligencePage";
 import { AIAssistantChat } from "@/features/ai-assistant/AIAssistantChat";
 import { getMarketService } from "@/services/market";
 import {
@@ -18,13 +18,15 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
     const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
     const marketService = getMarketService();
-    const [quoteRes, metricsRes] = await Promise.all([
+    const [quoteRes, metricsRes, profileRes] = await Promise.all([
         marketService.getQuote(cleanSymbol),
         marketService.getFinancialMetrics(cleanSymbol),
+        marketService.getCompanyProfile(cleanSymbol),
     ]);
 
     const quote = quoteRes.success ? quoteRes.data : undefined;
     const metrics = metricsRes.success ? metricsRes.data : undefined;
+    const profile = profileRes.success ? profileRes.data : undefined;
 
     const card =
         "rounded-xl border border-gray-800 bg-gray-800/60 backdrop-blur p-4";
@@ -32,9 +34,10 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
     return (
         <div className="min-h-screen bg-gray-900">
             <div className="container py-6 lg:py-8 space-y-8">
-                {/* AI Stock Intelligence Summary */}
-                <StockIntelligenceSummary
+                {/* Comprehensive 8-Pillar AI Stock Intelligence System */}
+                <StockIntelligencePage
                     symbol={cleanSymbol}
+                    companyName={profile?.name}
                     quote={quote}
                     metrics={metrics}
                 />

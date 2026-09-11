@@ -3,6 +3,7 @@ import { getAlertService } from '@/services/alerts';
 import { auth } from '@/lib/better-auth/auth';
 import { headers } from 'next/headers';
 import { connectToDatabase } from '@/database/mongoose';
+import { SmartAlertCategory } from '@/types/alerts';
 
 async function resolveUserId(): Promise<string> {
     try {
@@ -19,7 +20,7 @@ async function resolveUserId(): Promise<string> {
             }
         }
     } catch {
-        // Continue to fallback
+        // Fallback for session error
     }
     return 'demo_investor_user';
 }
@@ -28,21 +29,67 @@ export async function GET(req: Request) {
     try {
         const userId = await resolveUserId();
         const { searchParams } = new URL(req.url);
+        const mode = searchParams.get('mode');
         const symbol = searchParams.get('symbol');
+        const category = searchParams.get('category') as SmartAlertCategory | null;
+        const unreadOnly = searchParams.get('unreadOnly') === 'true';
 
         const alertService = getAlertService();
 
+        // 1. Smart Alerts mode
+        if (mode === 'smart') {
+            const res = await alertService.getSmartAlerts(
+                userId,
+                category || undefined,
+                unreadOnly
+            );
+            return NextResponse.json(res);
+        }
+
+        // 2. Legacy Price Alerts by Symbol
         if (symbol) {
             const res = await alertService.getAlertsForSymbol(userId, symbol);
             return NextResponse.json(res);
         }
 
+        // 3. Legacy Price Alerts for user
         const res = await alertService.getUserAlerts(userId);
         return NextResponse.json(res);
     } catch (err: any) {
         console.error('GET /api/alerts error:', err);
         return NextResponse.json(
             { success: false, error: err?.message || 'Failed to fetch alerts' },
+            { status: 500 }
+        );
+    }
+}
+
+export async function PATCH(req: Request) {
+    try {
+        const userId = await resolveUserId();
+        const body = await req.json();
+        const { alertId, action } = body;
+
+        const alertService = getAlertService();
+
+        if (action === 'markAllRead') {
+            const res = await alertService.markAllAlertsRead(userId);
+            return NextResponse.json(res);
+        }
+
+        if (!alertId) {
+            return NextResponse.json(
+                { success: false, error: 'alertId or markAllRead action is required' },
+                { status: 400 }
+            );
+        }
+
+        const res = await alertService.markAlertRead(userId, alertId);
+        return NextResponse.json(res);
+    } catch (err: any) {
+        console.error('PATCH /api/alerts error:', err);
+        return NextResponse.json(
+            { success: false, error: err?.message || 'Failed to update alert state' },
             { status: 500 }
         );
     }

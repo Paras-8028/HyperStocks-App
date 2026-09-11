@@ -18,6 +18,52 @@ export interface StockThesis {
     generatedAt: string;
 }
 
+export interface DetailedStockIntelligence {
+    symbol: string;
+    companyName: string;
+    summary: string;
+    bullCase: string[];
+    bearCase: string[];
+    technicalAnalysis: {
+        trend: 'bullish' | 'bearish' | 'neutral';
+        rsiExplanation: string;
+        movingAveragesExplanation: string;
+        macdExplanation: string;
+        supportResistance: {
+            keySupport: number;
+            keyResistance: number;
+            interpretation: string;
+        };
+        volumeInterpretation: string;
+    };
+    fundamentalAnalysis: {
+        valuationInterpretation: string;
+        revenueGrowthInterpretation: string;
+        earningsProfitability: string;
+        debtBalanceSheet: string;
+        peComparison: string;
+    };
+    newsSentiment: {
+        classification: 'Positive' | 'Neutral' | 'Negative';
+        sentimentScore: number;
+        reasoning: string;
+        recentHeadlinesAnalysis: string[];
+    };
+    riskAnalysis: {
+        overallRiskLevel: 'Low' | 'Medium' | 'High' | 'Extreme';
+        volatilityRisk: string;
+        financialRisk: string;
+        marketRisk: string;
+        sentimentRisk: string;
+    };
+    aiConfidence: {
+        score: number;
+        explanation: string;
+        disclaimer: string;
+    };
+    generatedAt: string;
+}
+
 export interface NewsSentimentAnalysis {
     articleId?: number | string;
     headline: string;

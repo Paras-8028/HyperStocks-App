@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { AIDailyBriefingData } from '@/types/ai';
 import { UserPreferences } from '@/types/personalization';
+import { usePersonalization } from '@/context/PersonalizationContext';
 import {
     AlertCircle,
     ArrowUpRight,
@@ -12,6 +13,7 @@ import {
     Flame,
     RefreshCw,
     ShieldAlert,
+    SlidersHorizontal,
     Sparkles,
     TrendingUp,
     Zap,
@@ -27,10 +29,12 @@ export interface AIDailyBriefingProps {
 
 export function AIDailyBriefing({
     initialData,
-    userPreferences,
+    userPreferences: propPreferences,
     watchlistSymbols = ['AAPL', 'NVDA', 'MSFT', 'AMZN'],
     className = '',
 }: AIDailyBriefingProps) {
+    const { preferences, openOnboarding } = usePersonalization();
+    const userPreferences = { ...preferences, ...(propPreferences || {}) };
     const defaultData: AIDailyBriefingData = {
         greeting: `Good morning, ${userPreferences?.name?.split(' ')[0] || 'Investor'}. Markets are showing dynamic momentum today.`,
         marketSummary:
@@ -129,7 +133,15 @@ export function AIDailyBriefing({
                     </h1>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                        onClick={openOnboarding}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-950/30 px-3.5 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-900/40 hover:text-emerald-200 transition"
+                    >
+                        <SlidersHorizontal className="h-3.5 w-3.5" />
+                        Personalize Engine
+                    </button>
+
                     <button
                         onClick={handleRefresh}
                         disabled={refreshing}

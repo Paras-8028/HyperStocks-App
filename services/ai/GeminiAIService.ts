@@ -31,11 +31,25 @@ export class GeminiAIService implements IAIIntelligenceService {
 
     private cleanJson(raw: string): string {
         let cleaned = raw.trim();
-        // Remove markdown code fences if present
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+        const firstBracket = cleaned.indexOf('[');
+        const lastBracket = cleaned.lastIndexOf(']');
+
+        // If JSON array is outermost
+        if (firstBracket !== -1 && lastBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+            return cleaned.substring(firstBracket, lastBracket + 1).trim();
+        }
+
+        // If JSON object is outermost
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            return cleaned.substring(firstBrace, lastBrace + 1).trim();
+        }
+
         if (cleaned.startsWith('```json')) {
-            cleaned = cleaned.replace(/^```json\s*/, '').replace(/```$/, '');
+            cleaned = cleaned.replace(/^```json\s*/i, '').replace(/```\s*$/, '');
         } else if (cleaned.startsWith('```')) {
-            cleaned = cleaned.replace(/^```\s*/, '').replace(/```$/, '');
+            cleaned = cleaned.replace(/^```\s*/, '').replace(/```\s*$/, '');
         }
         return cleaned.trim();
     }

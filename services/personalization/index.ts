@@ -12,3 +12,6 @@ export function getPersonalizationService(): IPersonalizationService {
 
 export * from './IPersonalizationService';
 export * from './PersonalizationService';
+export * from './PersonalizationContext';
+export * from './InsightRanking';
+export * from './RecommendationEngine';

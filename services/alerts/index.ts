@@ -12,3 +12,6 @@ export function getAlertService(): IAlertService {
 
 export * from './IAlertService';
 export * from './AlertService';
+export * from './AlertPriorityScorer';
+export * from './SmartAlertGenerator';
+

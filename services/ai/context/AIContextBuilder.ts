@@ -219,8 +219,18 @@ export class AIContextBuilder {
         }
 
         if (userPreferences) {
+            const sectors = userPreferences.preferredSectors?.join(', ') || userPreferences.preferredIndustry || 'Technology';
+            const goals = Array.isArray(userPreferences.investmentGoals)
+                ? userPreferences.investmentGoals.join(', ')
+                : userPreferences.investmentGoals;
             sections.push(
-                `USER PROFILE: Goal=${userPreferences.investmentGoals || 'Growth'}, Risk Tolerance=${userPreferences.riskTolerance || 'Medium'}, Preferred Sector=${userPreferences.preferredIndustry || 'Technology'}`
+                `USER INVESTOR PERSONA & PERSONALIZATION:
+- Experience Level: ${userPreferences.experienceLevel || 'intermediate'} (Tailor explanation depth and vocabulary accordingly)
+- Risk Tolerance: ${userPreferences.riskTolerance || 'moderate'} (If conservative, emphasize downside risk; if aggressive, emphasize upside drivers)
+- Primary Goals: ${goals || 'Growth'}
+- Preferred Sectors: ${sectors}
+- Investment Horizon: ${userPreferences.investmentHorizon || 'medium_term'}
+- Preferred Analysis Style: ${userPreferences.preferredAnalysisStyle || 'balanced'} (Focus explanations on ${userPreferences.preferredAnalysisStyle || 'balanced'} metrics)`
             );
         }
 

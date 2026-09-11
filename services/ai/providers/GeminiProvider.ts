@@ -33,7 +33,7 @@ export class GeminiProvider implements IAIProvider {
             };
         }
 
-        const model = AI_CONFIG.defaultModel;
+        const model: string = AI_CONFIG.defaultModel;
         const url = `${this.baseUrl}/${model}:generateContent?key=${this.apiKey}`;
 
         const payload: any = {
