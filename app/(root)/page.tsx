@@ -1,54 +1,86 @@
-import TradingViewWidget from "@/components/TradingViewWidget";
-import {
-    HEATMAP_WIDGET_CONFIG,
-    MARKET_DATA_WIDGET_CONFIG,
-    MARKET_OVERVIEW_WIDGET_CONFIG,
-    TOP_STORIES_WIDGET_CONFIG
-} from "@/lib/constants";
-import {sendDailyNewsSummary} from "@/lib/inngest/functions";
+import { AIDailyBriefing } from "@/features/dashboard/AIDailyBriefing";
+import { AIMarketInsights } from "@/features/dashboard/AIMarketInsights";
+import { WatchlistIntelligenceGrid } from "@/features/dashboard/WatchlistIntelligenceGrid";
+import { DashboardOverviewWidgets } from "@/features/dashboard/DashboardOverviewWidgets";
+import { AIOpportunitiesRadar } from "@/features/dashboard/AIOpportunitiesRadar";
+import { RiskRadar } from "@/features/dashboard/RiskRadar";
+import { AIInsightsFeed } from "@/features/dashboard/AIInsightsFeed";
+import { AIAssistantChat } from "@/features/ai-assistant/AIAssistantChat";
+import { auth } from "@/lib/better-auth/auth";
+import { headers } from "next/headers";
+import { getWatchlistSymbolsByEmail } from "@/lib/actions/watchlist.actions";
+import { getPersonalizationService } from "@/services/personalization";
 
-const Home = () => {
-    const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
+export default async function DashboardPage() {
+    let watchlistSymbols: string[] = [];
+    let userPreferences: any = undefined;
+
+    try {
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+        if (session?.user?.email) {
+            watchlistSymbols = await getWatchlistSymbolsByEmail(session.user.email);
+            const prefRes = await getPersonalizationService().getUserProfile(session.user.email);
+            if (prefRes.success) {
+                userPreferences = prefRes.data;
+            }
+        }
+    } catch {
+        // Fallback gracefully for unauthenticated views
+    }
 
     return (
-        <div className="flex min-h-screen home-wrapper">
-            <section className="grid w-full gap-8 home-section">
-                <div className="md:col-span-1 xl:col-span-1">
-                    <TradingViewWidget
-                        title="Market Overview"
-                        scriptUrl={`${scriptUrl}market-overview.js`}
-                        config={MARKET_OVERVIEW_WIDGET_CONFIG}
-                        className="custom-chart"
-                        height={600}
+        <div className="min-h-screen bg-gray-950 text-gray-100">
+            <main className="container mx-auto px-4 py-6 md:py-8 space-y-12">
+                {/* 1. AI Daily Briefing */}
+                <section id="daily-briefing">
+                    <AIDailyBriefing
+                        watchlistSymbols={watchlistSymbols}
+                        userPreferences={userPreferences}
                     />
-                </div>
-                <div className="md-col-span xl:col-span-2">
-                    <TradingViewWidget
-                        title="Stock Heatmap"
-                        scriptUrl={`${scriptUrl}stock-heatmap.js`}
-                        config={HEATMAP_WIDGET_CONFIG}
-                        height={600}
-                    />
-                </div>
-            </section>
-            <section className="grid w-full gap-8 home-section">
-                <div className="h-full md:col-span-1 xl:col-span-1">
-                    <TradingViewWidget
-                        scriptUrl={`${scriptUrl}timeline.js`}
-                        config={TOP_STORIES_WIDGET_CONFIG}
-                        height={600}
-                    />
-                </div>
-                <div className="h-full md:col-span-1 xl:col-span-2">
-                    <TradingViewWidget
-                        scriptUrl={`${scriptUrl}market-quotes.js`}
-                        config={MARKET_DATA_WIDGET_CONFIG}
-                        height={600}
-                    />
-                </div>
-            </section>
-        </div>
-    )
-}
-export default Home
+                </section>
 
+                {/* 2. AI Market Insights */}
+                <section id="market-insights">
+                    <AIMarketInsights />
+                </section>
+
+                {/* 3. Personalized Watchlist Intelligence */}
+                <section id="watchlist-intelligence">
+                    <WatchlistIntelligenceGrid />
+                </section>
+
+                {/* 4. Opportunities Radar & 5. Risk Radar (Side-by-side or stacked) */}
+                <div className="grid grid-cols-1 gap-12">
+                    <section id="opportunities">
+                        <AIOpportunitiesRadar />
+                    </section>
+
+                    <section id="risk-radar">
+                        <RiskRadar />
+                    </section>
+                </div>
+
+                {/* 6. AI Insights Feed */}
+                <section id="insights-feed">
+                    <AIInsightsFeed />
+                </section>
+
+                {/* 7. Market Overview (Charts, Heatmap, Quotes, News) */}
+                <section id="market-overview">
+                    <DashboardOverviewWidgets />
+                </section>
+            </main>
+
+            {/* Global Collapsible AI Assistant Copilot */}
+            <AIAssistantChat
+                collapsible
+                context={{
+                    watchlistSymbols,
+                    userProfile: userPreferences,
+                }}
+            />
+        </div>
+    );
+}

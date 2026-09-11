@@ -1,6 +1,6 @@
 import { ApiClient } from '@/services/api/apiClient';
 import { IMarketDataProvider } from './IMarketDataProvider';
-import { ApiResult } from '@/types/api';
+import { ApiFailure, ApiResult } from '@/types/api';
 import {
     CompanyProfile,
     FinancialMetrics,
@@ -22,7 +22,7 @@ export class FinnhubMarketService implements IMarketDataProvider {
             '';
     }
 
-    private ensureToken(): ApiResult<string> | null {
+    private ensureToken(): ApiFailure | null {
         if (!this.token) {
             return {
                 success: false,

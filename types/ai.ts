@@ -67,3 +67,76 @@ export interface CopilotContext {
     userProfile?: Partial<UserPreferences>;
     watchlistSymbols?: string[];
 }
+
+export interface AIDailyBriefingData {
+    greeting: string;
+    marketSummary: string;
+    watchlistImpact: {
+        changePercent: number;
+        trend: 'up' | 'down' | 'flat';
+        driver: string;
+    };
+    attentionStocks: Array<{
+        symbol: string;
+        reason: string;
+        priority: 'high' | 'medium';
+    }>;
+    importantEvents: string[];
+    keyOpportunities: string[];
+    keyRisks: string[];
+    dateFormatted: string;
+}
+
+export interface AIMarketInsightItem {
+    id: string;
+    type: 'unusual_movement' | 'trending_sector' | 'unusual_volume' | 'earnings' | 'breaking_news';
+    title: string;
+    symbol?: string;
+    description: string;
+    metric?: string;
+    sentiment: 'bullish' | 'bearish' | 'neutral';
+    timestamp: string;
+}
+
+export interface WatchlistIntelligenceItem {
+    symbol: string;
+    company: string;
+    currentPrice: number;
+    changePercent: number;
+    movementReason: string;
+    newsSentiment: 'bullish' | 'bearish' | 'neutral';
+    sentimentScore: number;
+    technicalSignal: 'Strong Buy' | 'Buy' | 'Neutral' | 'Sell' | 'Strong Sell';
+    riskLevel: 'Low' | 'Medium' | 'High';
+    confidenceScore: number;
+}
+
+export interface OpportunityItem {
+    symbol: string;
+    company: string;
+    thesis: string;
+    catalyst: string;
+    metricsHighlight: string;
+    confidence: number;
+    timeframe: 'Short Term' | 'Medium Term' | 'Long Term';
+    risk: 'Low' | 'Medium' | 'High';
+}
+
+export interface RiskRadarItem {
+    id: string;
+    category: 'concentration' | 'volatility' | 'sentiment' | 'macro';
+    severity: 'critical' | 'warning' | 'advisory';
+    title: string;
+    description: string;
+    affectedSymbols?: string[];
+    suggestedAction?: string;
+}
+
+export interface AIInsightFeedItem {
+    id: string;
+    category: 'volume' | 'technical' | 'sentiment' | 'macro';
+    content: string;
+    relatedSymbol?: string;
+    timeAgo: string;
+}
+
