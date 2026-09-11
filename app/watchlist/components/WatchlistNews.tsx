@@ -68,7 +68,7 @@ export default function WatchlistNews({ symbols }: Props) {
 
     return (
         <div className="space-y-6">
-            {articles.map((article) => (
+            {articles.map((article, index) => (
                 <a
                     key={article.id ? `news-${article.id}` : `news-${index}`}
                     href={article.url}

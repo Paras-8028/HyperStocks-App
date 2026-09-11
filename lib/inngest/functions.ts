@@ -119,7 +119,7 @@ export const sendDailyNewsSummary = inngest.createFunction(
         });
 
         // 3️⃣ AI summary
-        const userNewsSummaries = [];
+        const userNewsSummaries: Array<{ user: any; newsContent: string | null }> = [];
 
         for (const { user, articles } of results) {
             try {

@@ -58,15 +58,20 @@ export async function getWatchlistSymbolsByEmail(email: string): Promise<string[
 }
 
 /** Used by /watchlist page */
-export async function getUserWatchlist(email: string) {
-    if (!email) return [];
-
+export async function getUserWatchlist(email?: string) {
     try {
+        let userEmail = email;
+        if (!userEmail) {
+            const current = await resolveCurrentUser().catch(() => null);
+            userEmail = current?.email;
+        }
+        if (!userEmail) return [];
+
         const mongoose = await connectToDatabase();
         const db = mongoose.connection.db;
         if (!db) throw new Error("MongoDB connection not found");
 
-        const user = await db.collection("user").findOne({ email });
+        const user = await db.collection("user").findOne({ email: userEmail });
         if (!user) return [];
 
         const userId = user.id || String(user._id);
