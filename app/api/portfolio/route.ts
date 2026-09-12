@@ -4,8 +4,7 @@ import { PortfolioAnalyticsService } from '@/services/portfolio/PortfolioAnalyti
 import { getPersonalizationService } from '@/services/personalization';
 import { AIProviderFactory } from '@/services/ai/providers/AIProviderFactory';
 import { DETAILED_PORTFOLIO_INTELLIGENCE_PROMPT } from '@/services/ai/prompts';
-import { auth } from '@/lib/better-auth/auth';
-import { headers } from 'next/headers';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { connectToDatabase } from '@/database/mongoose';
 import { AIPortfolioReport, PortfolioPosition } from '@/types/portfolio';
 
@@ -65,33 +64,28 @@ const DEMO_POSITIONS: PortfolioPosition[] = [
     },
 ];
 
-async function resolveUser(): Promise<{ userId: string; email?: string }> {
+async function resolveUser(): Promise<{ userId: string; email?: string } | null> {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
+        const { userId } = await auth();
+        if (!userId) return null;
 
-        if (session?.user?.email) {
-            const email = session.user.email;
-            let userId = session.user.id;
-
-            const mongoose = await connectToDatabase();
-            const db = mongoose.connection.db;
-            if (db) {
-                const u = await db.collection('user').findOne({ email });
-                if (u) userId = u.id || String(u._id);
-            }
-            return { userId, email };
-        }
+        const clerkUser = await currentUser();
+        return {
+            userId,
+            email: clerkUser?.primaryEmailAddress?.emailAddress,
+        };
     } catch {
-        // Fallback for unauthenticated access
+        return null;
     }
-    return { userId: 'demo_investor_user' };
 }
 
 export async function GET(req: Request) {
     try {
-        const { userId, email } = await resolveUser();
+        const user = await resolveUser();
+        if (!user) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+        const { userId, email } = user;
         const { searchParams } = new URL(req.url);
         const forceDemo = searchParams.get('demo') === 'true';
 
@@ -218,7 +212,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const { userId } = await resolveUser();
+        const user = await resolveUser();
+        if (!user) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+        const { userId } = user;
         const body = await req.json();
         const { symbol, shares, costBasis, notes } = body;
 
@@ -249,7 +247,11 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
     try {
-        const { userId } = await resolveUser();
+        const user = await resolveUser();
+        if (!user) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+        const { userId } = user;
         const { searchParams } = new URL(req.url);
         const positionId = searchParams.get('id');
 

@@ -57,7 +57,7 @@ export class GeminiAIService implements IAIIntelligenceService {
     private async callGemini(
         prompt: string,
         systemInstruction?: string,
-        model: string = AI_CONFIG.defaultModel
+        modelIndex: number = 0
     ): Promise<ApiResult<string>> {
         if (!this.apiKey) {
             return {
@@ -67,6 +67,15 @@ export class GeminiAIService implements IAIIntelligenceService {
             };
         }
 
+        const candidateModels = Array.from(
+            new Set([
+                AI_CONFIG.defaultModel,
+                AI_CONFIG.fallbackModel,
+                ...(AI_CONFIG.candidateModels || []),
+            ])
+        );
+
+        const model = candidateModels[modelIndex] || AI_CONFIG.defaultModel;
         const url = `${this.baseUrl}/${model}:generateContent?key=${this.apiKey}`;
 
         const contents = [
@@ -95,9 +104,10 @@ export class GeminiAIService implements IAIIntelligenceService {
         });
 
         if (!res.success) {
-            // Try fallback model if default model errored
-            if (model !== AI_CONFIG.fallbackModel) {
-                return this.callGemini(prompt, systemInstruction, AI_CONFIG.fallbackModel);
+            // Try next candidate model if current model errored
+            if (modelIndex + 1 < candidateModels.length) {
+                console.warn(`[GeminiAIService] Model ${model} failed. Falling back to next candidate model...`);
+                return this.callGemini(prompt, systemInstruction, modelIndex + 1);
             }
             return res;
         }
@@ -318,4 +328,12 @@ Provide an analytical, objective response with actionable insights, bulleted key
             data: responseMessage,
         };
     }
+
+    async generateCompletion(
+        prompt: string,
+        systemInstruction?: string
+    ): Promise<ApiResult<string>> {
+        return this.callGemini(prompt, systemInstruction);
+    }
 }
+

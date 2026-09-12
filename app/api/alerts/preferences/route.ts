@@ -1,32 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getAlertService } from '@/services/alerts';
-import { auth } from '@/lib/better-auth/auth';
-import { headers } from 'next/headers';
-import { connectToDatabase } from '@/database/mongoose';
-
-async function resolveUserId(): Promise<string> {
-    try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
-        if (session?.user?.email) {
-            const mongoose = await connectToDatabase();
-            const db = mongoose.connection.db;
-            if (db) {
-                const u = await db.collection('user').findOne({ email: session.user.email });
-                if (u) return u.id || String(u._id);
-            }
-        }
-    } catch {
-        // Fallback
-    }
-    return 'demo_investor_user';
-}
+import { auth } from '@clerk/nextjs/server';
 
 export async function GET() {
     try {
-        const userId = await resolveUserId();
+        const { userId } = await auth();
+        if (!userId) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
         const alertService = getAlertService();
         const res = await alertService.getUserAlertPreferences(userId);
         return NextResponse.json(res);
@@ -41,7 +23,11 @@ export async function GET() {
 
 export async function PUT(req: Request) {
     try {
-        const userId = await resolveUserId();
+        const { userId } = await auth();
+        if (!userId) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await req.json();
         const { preferences } = body;
 

@@ -18,8 +18,8 @@ import { RecommendationEngine } from './RecommendationEngine';
 export class PersonalizationService implements IPersonalizationService {
     private recommendationEngine = new RecommendationEngine();
 
-    async getUserProfile(emailOrId: string): Promise<ApiResult<UserPreferences>> {
-        if (!emailOrId || emailOrId === 'guest') {
+    async getUserProfile(userIdOrEmail: string): Promise<ApiResult<UserPreferences>> {
+        if (!userIdOrEmail || userIdOrEmail === 'guest') {
             return {
                 success: true,
                 data: { ...DEFAULT_USER_PREFERENCES },
@@ -28,58 +28,69 @@ export class PersonalizationService implements IPersonalizationService {
 
         try {
             const mongoose = await connectToDatabase();
-            const db = mongoose.connection.db;
-            if (!db) {
-                return {
-                    success: true,
-                    data: { ...DEFAULT_USER_PREFERENCES, email: emailOrId },
-                };
+            const { UserPreferenceModel } = await import('@/database/models/user_preference.model');
+
+            // 1. Primary lookup by Clerk userId
+            let doc = await UserPreferenceModel.findOne({ userId: userIdOrEmail }).lean();
+
+            // 2. Secondary lookup by email (for migration)
+            if (!doc && userIdOrEmail.includes('@')) {
+                doc = await UserPreferenceModel.findOne({ email: userIdOrEmail }).lean();
             }
 
-            const isEmail = emailOrId.includes('@');
-            const query = isEmail ? { email: emailOrId } : { id: emailOrId };
+            // 3. Fallback check in legacy 'user' collection if exists
+            if (!doc && mongoose.connection.db) {
+                const legacy = await mongoose.connection.db
+                    .collection('user')
+                    .findOne(userIdOrEmail.includes('@') ? { email: userIdOrEmail } : { id: userIdOrEmail });
 
-            const user = await db.collection('user').findOne(query);
+                if (legacy) {
+                    doc = await UserPreferenceModel.findOneAndUpdate(
+                        { userId: userIdOrEmail.startsWith('user_') ? userIdOrEmail : legacy.id || String(legacy._id) },
+                        {
+                            $setOnInsert: {
+                                userId: userIdOrEmail.startsWith('user_') ? userIdOrEmail : legacy.id || String(legacy._id),
+                                email: legacy.email || '',
+                                name: legacy.name || 'Investor',
+                                experienceLevel: legacy.experienceLevel || DEFAULT_USER_PREFERENCES.experienceLevel,
+                                riskTolerance: legacy.riskTolerance || DEFAULT_USER_PREFERENCES.riskTolerance,
+                                preferredIndustry: legacy.preferredIndustry || DEFAULT_USER_PREFERENCES.preferredIndustry,
+                            },
+                        },
+                        { upsert: true, new: true }
+                    ).lean();
+                }
+            }
 
-            if (!user) {
+            if (!doc) {
                 return {
                     success: true,
-                    data: { ...DEFAULT_USER_PREFERENCES, email: isEmail ? emailOrId : '' },
+                    data: {
+                        ...DEFAULT_USER_PREFERENCES,
+                        userId: userIdOrEmail,
+                        email: userIdOrEmail.includes('@') ? userIdOrEmail : '',
+                    },
                 };
             }
 
             const prefs: UserPreferences = {
-                userId: user.id || String(user._id),
-                email: user.email,
-                name: user.name || 'Investor',
-                country: user.country || 'US',
-                experienceLevel: user.experienceLevel || DEFAULT_USER_PREFERENCES.experienceLevel,
-                investmentGoals: user.investmentGoals
-                    ? Array.isArray(user.investmentGoals)
-                        ? user.investmentGoals
-                        : [user.investmentGoals]
-                    : DEFAULT_USER_PREFERENCES.investmentGoals,
-                riskTolerance: user.riskTolerance || DEFAULT_USER_PREFERENCES.riskTolerance,
-                preferredSectors:
-                    user.preferredSectors && user.preferredSectors.length > 0
-                        ? user.preferredSectors
-                        : DEFAULT_USER_PREFERENCES.preferredSectors,
-                preferredRegions:
-                    user.preferredRegions && user.preferredRegions.length > 0
-                        ? user.preferredRegions
-                        : DEFAULT_USER_PREFERENCES.preferredRegions,
-                investmentHorizon: user.investmentHorizon || DEFAULT_USER_PREFERENCES.investmentHorizon,
-                preferredAnalysisStyle:
-                    user.preferredAnalysisStyle || DEFAULT_USER_PREFERENCES.preferredAnalysisStyle,
-                favoriteStocks:
-                    user.favoriteStocks && user.favoriteStocks.length > 0
-                        ? user.favoriteStocks
-                        : DEFAULT_USER_PREFERENCES.favoriteStocks,
-                preferredIndustry: user.preferredIndustry || DEFAULT_USER_PREFERENCES.preferredIndustry,
-                notificationPreferences: user.notificationPreferences || DEFAULT_USER_PREFERENCES.notificationPreferences,
-                aiPersonaPreference: user.aiPersonaPreference || DEFAULT_USER_PREFERENCES.aiPersonaPreference,
-                onboardingCompleted: user.onboardingCompleted ?? Boolean(user.experienceLevel || user.riskTolerance),
-                lastUpdated: user.updatedAt ? new Date(user.updatedAt).toISOString() : undefined,
+                userId: doc.userId,
+                email: doc.email || '',
+                name: doc.name || 'Investor',
+                country: doc.country || 'US',
+                experienceLevel: doc.experienceLevel || DEFAULT_USER_PREFERENCES.experienceLevel,
+                investmentGoals: doc.investmentGoals || DEFAULT_USER_PREFERENCES.investmentGoals,
+                riskTolerance: doc.riskTolerance || DEFAULT_USER_PREFERENCES.riskTolerance,
+                preferredSectors: doc.preferredSectors || DEFAULT_USER_PREFERENCES.preferredSectors,
+                preferredRegions: doc.preferredRegions || DEFAULT_USER_PREFERENCES.preferredRegions,
+                investmentHorizon: doc.investmentHorizon || DEFAULT_USER_PREFERENCES.investmentHorizon,
+                preferredAnalysisStyle: doc.preferredAnalysisStyle || DEFAULT_USER_PREFERENCES.preferredAnalysisStyle,
+                favoriteStocks: doc.favoriteStocks || DEFAULT_USER_PREFERENCES.favoriteStocks,
+                preferredIndustry: doc.preferredIndustry || DEFAULT_USER_PREFERENCES.preferredIndustry,
+                notificationPreferences: doc.notificationPreferences || DEFAULT_USER_PREFERENCES.notificationPreferences,
+                aiPersonaPreference: doc.aiPersonaPreference || DEFAULT_USER_PREFERENCES.aiPersonaPreference,
+                onboardingCompleted: doc.onboardingCompleted ?? Boolean(doc.experienceLevel || doc.riskTolerance),
+                lastUpdated: doc.updatedAt ? new Date(doc.updatedAt).toISOString() : undefined,
             };
 
             return { success: true, data: prefs };
@@ -87,16 +98,20 @@ export class PersonalizationService implements IPersonalizationService {
             console.error('PersonalizationService.getUserProfile error:', err);
             return {
                 success: true,
-                data: { ...DEFAULT_USER_PREFERENCES, email: emailOrId },
+                data: {
+                    ...DEFAULT_USER_PREFERENCES,
+                    userId: userIdOrEmail,
+                    email: userIdOrEmail.includes('@') ? userIdOrEmail : '',
+                },
             };
         }
     }
 
     async updatePreferences(
-        emailOrId: string,
+        userIdOrEmail: string,
         prefs: Partial<UserPreferences>
     ): Promise<ApiResult<UserPreferences>> {
-        if (!emailOrId || emailOrId === 'guest') {
+        if (!userIdOrEmail || userIdOrEmail === 'guest') {
             return {
                 success: true,
                 data: { ...DEFAULT_USER_PREFERENCES, ...prefs },
@@ -104,19 +119,23 @@ export class PersonalizationService implements IPersonalizationService {
         }
 
         try {
-            const mongoose = await connectToDatabase();
-            const db = mongoose.connection.db;
-            if (!db) {
-                return { success: false, error: 'Database not connected', code: 'DB_ERROR' };
-            }
+            await connectToDatabase();
+            const { UserPreferenceModel } = await import('@/database/models/user_preference.model');
 
-            const isEmail = emailOrId.includes('@');
-            const query = isEmail ? { email: emailOrId } : { id: emailOrId };
+            const isEmail = userIdOrEmail.includes('@');
+            const query = isEmail ? { email: userIdOrEmail } : { userId: userIdOrEmail };
 
             const updateFields: Record<string, any> = {
                 updatedAt: new Date(),
+                ...(prefs.email && { email: prefs.email }),
+                ...(prefs.name && { name: prefs.name }),
+                ...(prefs.country && { country: prefs.country }),
                 ...(prefs.experienceLevel && { experienceLevel: prefs.experienceLevel }),
-                ...(prefs.investmentGoals && { investmentGoals: prefs.investmentGoals }),
+                ...(prefs.investmentGoals && {
+                    investmentGoals: Array.isArray(prefs.investmentGoals)
+                        ? prefs.investmentGoals
+                        : [prefs.investmentGoals],
+                }),
                 ...(prefs.riskTolerance && { riskTolerance: prefs.riskTolerance }),
                 ...(prefs.preferredSectors && { preferredSectors: prefs.preferredSectors }),
                 ...(prefs.preferredRegions && { preferredRegions: prefs.preferredRegions }),
@@ -129,9 +148,13 @@ export class PersonalizationService implements IPersonalizationService {
                 ...(prefs.onboardingCompleted !== undefined && { onboardingCompleted: prefs.onboardingCompleted }),
             };
 
-            await db.collection('user').updateOne(query, { $set: updateFields }, { upsert: true });
+            if (!isEmail) {
+                updateFields.userId = userIdOrEmail;
+            }
 
-            return this.getUserProfile(emailOrId);
+            await UserPreferenceModel.findOneAndUpdate(query, { $set: updateFields }, { upsert: true, new: true });
+
+            return this.getUserProfile(userIdOrEmail);
         } catch (err: any) {
             console.error('PersonalizationService.updatePreferences error:', err);
             return {

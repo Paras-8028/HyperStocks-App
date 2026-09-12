@@ -1,33 +1,24 @@
 import { NextResponse } from 'next/server';
 import { getAlertService } from '@/services/alerts';
-import { auth } from '@/lib/better-auth/auth';
-import { headers } from 'next/headers';
-import { connectToDatabase } from '@/database/mongoose';
+import { auth } from '@clerk/nextjs/server';
 import { SmartAlertCategory } from '@/types/alerts';
 
-async function resolveUserId(): Promise<string> {
+async function resolveUserId(): Promise<string | null> {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
-        if (session?.user?.email) {
-            const mongoose = await connectToDatabase();
-            const db = mongoose.connection.db;
-            if (db) {
-                const u = await db.collection('user').findOne({ email: session.user.email });
-                if (u) return u.id || String(u._id);
-            }
-        }
+        const { userId } = await auth();
+        return userId;
     } catch {
-        // Fallback for session error
+        return null;
     }
-    return 'demo_investor_user';
 }
 
 export async function GET(req: Request) {
     try {
         const userId = await resolveUserId();
+        if (!userId) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { searchParams } = new URL(req.url);
         const mode = searchParams.get('mode');
         const symbol = searchParams.get('symbol');
@@ -46,13 +37,20 @@ export async function GET(req: Request) {
             return NextResponse.json(res);
         }
 
-        // 2. Legacy Price Alerts by Symbol
+        // 2. Unread count mode
+        if (mode === 'count') {
+            const smartRes = await alertService.getSmartAlerts(userId);
+            const count = smartRes.success ? smartRes.data.filter((a) => !a.isRead).length : 0;
+            return NextResponse.json({ success: true, data: { unreadCount: count } });
+        }
+
+        // 3. Traditional price alerts by symbol
         if (symbol) {
             const res = await alertService.getAlertsForSymbol(userId, symbol);
             return NextResponse.json(res);
         }
 
-        // 3. Legacy Price Alerts for user
+        // 4. All traditional price alerts for user
         const res = await alertService.getUserAlerts(userId);
         return NextResponse.json(res);
     } catch (err: any) {
@@ -67,25 +65,26 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
     try {
         const userId = await resolveUserId();
+        if (!userId) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await req.json();
-        const { alertId, action } = body;
+        const { action, alertId } = body;
 
         const alertService = getAlertService();
 
-        if (action === 'markAllRead') {
+        if (action === 'mark-read' && alertId) {
+            const res = await alertService.markAlertRead(userId, alertId);
+            return NextResponse.json(res);
+        }
+
+        if (action === 'mark-all-read') {
             const res = await alertService.markAllAlertsRead(userId);
             return NextResponse.json(res);
         }
 
-        if (!alertId) {
-            return NextResponse.json(
-                { success: false, error: 'alertId or markAllRead action is required' },
-                { status: 400 }
-            );
-        }
-
-        const res = await alertService.markAlertRead(userId, alertId);
-        return NextResponse.json(res);
+        return NextResponse.json({ success: false, error: 'Invalid action' }, { status: 400 });
     } catch (err: any) {
         console.error('PATCH /api/alerts error:', err);
         return NextResponse.json(
@@ -98,6 +97,10 @@ export async function PATCH(req: Request) {
 export async function POST(req: Request) {
     try {
         const userId = await resolveUserId();
+        if (!userId) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await req.json();
         const { symbol, targetPrice, condition } = body;
 
@@ -128,6 +131,10 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
     try {
         const userId = await resolveUserId();
+        if (!userId) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { searchParams } = new URL(req.url);
         const alertId = searchParams.get('id');
 

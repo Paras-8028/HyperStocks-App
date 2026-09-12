@@ -1,5 +1,12 @@
 let socket: WebSocket | null = null;
-let listeners = new Map<string, (price: number) => void>();
+interface FinnhubTrade {
+    s: string; // Symbol
+    p: number; // Last price
+    t: number; // UNIX ms
+    v: number; // Volume
+}
+
+const listeners = new Map<string, (price: number) => void>();
 
 export function connectFinnhub() {
     if (socket) return;
@@ -9,12 +16,16 @@ export function connectFinnhub() {
     );
 
     socket.onmessage = event => {
-        const msg = JSON.parse(event.data);
-        if (msg.type !== "trade") return;
+        try {
+            const msg = JSON.parse(event.data);
+            if (msg.type !== "trade" || !Array.isArray(msg.data)) return;
 
-        msg.data.forEach((trade: any) => {
-            listeners.get(trade.s)?.(trade.p);
-        });
+            msg.data.forEach((trade: FinnhubTrade) => {
+                listeners.get(trade.s)?.(trade.p);
+            });
+        } catch {
+            // Ignore malformed socket frames
+        }
     };
 }
 

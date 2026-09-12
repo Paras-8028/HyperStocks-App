@@ -1,56 +1,63 @@
 'use server';
 
-import { headers } from 'next/headers';
 import { connectToDatabase } from '@/database/mongoose';
 import { Watchlist } from '@/database/models/watchlist.model';
-import { auth } from '@/lib/better-auth/auth';
+import { auth } from '@clerk/nextjs/server';
 
 const MAX_WATCHLIST_ITEMS = 50;
 
 /* =====================================================
-   Helper: resolve current logged-in user
+   Helper: resolve current logged-in user via Clerk
 ===================================================== */
-async function resolveCurrentUser() {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+async function resolveCurrentUser(): Promise<{ userId: string }> {
+    const { userId } = await auth();
 
-    const email = session?.user?.email;
-    if (!email) throw new Error('Unauthorized');
+    if (!userId) {
+        throw new Error('Unauthorized');
+    }
 
-    const mongoose = await connectToDatabase();
-    const db = mongoose.connection.db;
-    if (!db) throw new Error('MongoDB connection not found');
-
-    const user = await db.collection('user').findOne({ email });
-    if (!user) throw new Error('User not found');
-
-    const userId = user.id || String(user._id);
-    if (!userId) throw new Error('Invalid user id');
-
-    return { userId, email };
+    return { userId };
 }
 
 /* =====================================================
    READ
 ===================================================== */
 
+/** Direct lookup by Clerk userId */
+export async function getWatchlistSymbolsByUserId(userId: string): Promise<string[]> {
+    if (!userId) return [];
+
+    try {
+        await connectToDatabase();
+        const items = await Watchlist.find({ userId }, { symbol: 1 }).lean();
+        return items.map((i) => String(i.symbol));
+    } catch (err) {
+        console.error('getWatchlistSymbolsByUserId error:', err);
+        return [];
+    }
+}
+
 /** Used for syncing ⭐ state in search results */
-export async function getWatchlistSymbolsByEmail(email: string): Promise<string[]> {
-    if (!email) return [];
+export async function getWatchlistSymbolsByEmail(emailOrUserId: string): Promise<string[]> {
+    if (!emailOrUserId) return [];
+
+    // If it's already a Clerk user ID
+    if (!emailOrUserId.includes('@')) {
+        return getWatchlistSymbolsByUserId(emailOrUserId);
+    }
 
     try {
         const mongoose = await connectToDatabase();
         const db = mongoose.connection.db;
-        if (!db) throw new Error('MongoDB connection not found');
+        if (!db) return [];
 
-        const user = await db.collection('user').findOne({ email });
+        const user = await db.collection('user').findOne({ email: emailOrUserId });
         if (!user) return [];
 
         const userId = user.id || String(user._id);
         const items = await Watchlist.find({ userId }, { symbol: 1 }).lean();
 
-        return items.map(i => String(i.symbol));
+        return items.map((i) => String(i.symbol));
     } catch (err) {
         console.error('getWatchlistSymbolsByEmail error:', err);
         return [];
@@ -58,44 +65,44 @@ export async function getWatchlistSymbolsByEmail(email: string): Promise<string[
 }
 
 /** Used by /watchlist page */
-export async function getUserWatchlist(email?: string) {
+export async function getUserWatchlist(emailOrUserId?: string) {
     try {
-        let userEmail = email;
-        if (!userEmail) {
+        let userId = emailOrUserId;
+
+        if (!userId) {
             const current = await resolveCurrentUser().catch(() => null);
-            userEmail = current?.email;
+            userId = current?.userId;
         }
-        if (!userEmail) return [];
 
-        const mongoose = await connectToDatabase();
-        const db = mongoose.connection.db;
-        if (!db) throw new Error("MongoDB connection not found");
+        if (!userId) return [];
 
-        const user = await db.collection("user").findOne({ email: userEmail });
-        if (!user) return [];
+        await connectToDatabase();
 
-        const userId = user.id || String(user._id);
+        // If email was provided, check legacy user collection
+        if (userId.includes('@')) {
+            const mongoose = await connectToDatabase();
+            const db = mongoose.connection.db;
+            if (db) {
+                const user = await db.collection('user').findOne({ email: userId });
+                if (user) userId = user.id || String(user._id);
+            }
+        }
 
-        // ✅ IMPORTANT: use .lean() to get plain objects
         const items = await Watchlist.find({ userId })
             .sort({ addedAt: -1 })
             .lean();
 
-        // ✅ MANUAL SERIALIZATION (critical)
         return items.map((item) => ({
-            id: String(item._id),        // serialize ObjectId
+            id: String(item._id),
             symbol: item.symbol,
             company: item.company,
-            addedAt: item.addedAt
-                ? new Date(item.addedAt).toISOString()
-                : null,
+            addedAt: item.addedAt ? new Date(item.addedAt).toISOString() : null,
         }));
     } catch (err) {
-        console.error("getUserWatchlist error:", err);
+        console.error('getUserWatchlist error:', err);
         return [];
     }
 }
-
 
 /* =====================================================
    WRITE
@@ -104,6 +111,7 @@ export async function getUserWatchlist(email?: string) {
 export async function addToWatchlist(symbol: string, company: string) {
     try {
         const { userId } = await resolveCurrentUser();
+        await connectToDatabase();
 
         const count = await Watchlist.countDocuments({ userId });
         if (count >= MAX_WATCHLIST_ITEMS) {
@@ -121,7 +129,6 @@ export async function addToWatchlist(symbol: string, company: string) {
 
         return { success: true };
     } catch (err: any) {
-        // Duplicate symbol (unique index)
         if (err?.code === 11000) {
             return { success: true };
         }
@@ -137,6 +144,7 @@ export async function addToWatchlist(symbol: string, company: string) {
 export async function removeFromWatchlist(symbol: string) {
     try {
         const { userId } = await resolveCurrentUser();
+        await connectToDatabase();
 
         await Watchlist.deleteOne({
             userId,
@@ -145,11 +153,10 @@ export async function removeFromWatchlist(symbol: string) {
 
         return { success: true };
     } catch (err) {
-        console.error("removeFromWatchlist error:", err);
-        throw new Error("Failed to remove from watchlist");
+        console.error('removeFromWatchlist error:', err);
+        throw new Error('Failed to remove from watchlist');
     }
 }
-
 
 /* =====================================================
    TOGGLE WATCHLIST ⭐
@@ -159,6 +166,7 @@ export async function toggleWatchlist(
     company: string
 ): Promise<{ added: boolean }> {
     const { userId } = await resolveCurrentUser();
+    await connectToDatabase();
 
     const normalized = symbol.toUpperCase();
 
@@ -174,7 +182,7 @@ export async function toggleWatchlist(
 
     const count = await Watchlist.countDocuments({ userId });
     if (count >= MAX_WATCHLIST_ITEMS) {
-        throw new Error("Watchlist limit reached (50)");
+        throw new Error('Watchlist limit reached (50)');
     }
 
     await Watchlist.create({

@@ -2,30 +2,20 @@
 
 import { connectToDatabase } from "@/database/mongoose";
 import { AlertModel } from "@/database/models/alert.model";
-import { auth } from "@/lib/better-auth/auth";
-import { headers } from "next/headers";
-import { getStockQuote } from "@/lib/actions/finnhub.actions";
+import { auth } from "@clerk/nextjs/server";
 
 /* --------------------------------------------------
-   Helper: get current user
+   Helper: get current user via Clerk
 -------------------------------------------------- */
 async function getCurrentUser() {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+    const { userId } = await auth();
 
-    const email = session?.user?.email;
-    if (!email) throw new Error("Unauthorized");
+    if (!userId) {
+        throw new Error("Unauthorized");
+    }
 
-    const mongoose = await connectToDatabase();
-    const db = mongoose.connection.db;
-    if (!db) throw new Error("DB not connected");
-
-    const user = await db.collection("user").findOne({ email });
-    if (!user) throw new Error("User not found");
-
-    const userId = user.id || String(user._id);
-    return { userId, email };
+    await connectToDatabase();
+    return { userId };
 }
 
 /* --------------------------------------------------
@@ -48,16 +38,13 @@ export async function createAlert(
         status: "active",
     });
 
-
     return { success: true };
 }
-
 
 /* --------------------------------------------------
    Get Alerts for Symbol
 -------------------------------------------------- */
 export async function getAlertsBySymbol(symbol?: string) {
-    // ✅ HARD GUARD (this fixes crash)
     if (!symbol || typeof symbol !== "string") {
         return [];
     }
@@ -71,7 +58,7 @@ export async function getAlertsBySymbol(symbol?: string) {
 }
 
 /* --------------------------------------------------
-   Delete Alert ✅ (THIS FIXES YOUR ERROR)
+   Delete Alert
 -------------------------------------------------- */
 export async function deleteAlert(alertId: string) {
     const { userId } = await getCurrentUser();

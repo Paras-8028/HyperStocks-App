@@ -144,7 +144,7 @@ export function AIMarketInsights({ className = '' }: { className?: string }) {
                                                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                                                 : item.sentiment === 'bearish'
                                                 ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                                                : 'bg-gray-800 text-gray-400 border-gray-700'
+                                                : 'bg-gray-800 text-gray-300 border-gray-700'
                                         }`}
                                     >
                                         {item.sentiment === 'bullish' ? (
@@ -154,13 +154,13 @@ export function AIMarketInsights({ className = '' }: { className?: string }) {
                                         ) : (
                                             <Activity className="h-3 w-3" />
                                         )}
-                                        {item.type.replace('_', ' ')}
+                                        {item.sentiment.toUpperCase()} • {item.type.replace('_', ' ')}
                                     </span>
 
                                     {item.symbol && (
                                         <Link
                                             href={`/stocks/${item.symbol}`}
-                                            className="text-xs font-bold text-gray-200 hover:text-emerald-400 transition"
+                                            className="text-xs font-bold text-gray-100 hover:text-emerald-400 transition"
                                         >
                                             ${item.symbol}
                                         </Link>

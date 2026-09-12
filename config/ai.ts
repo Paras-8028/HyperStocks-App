@@ -1,7 +1,13 @@
 export const AI_CONFIG = {
     provider: 'gemini' as const,
-    defaultModel: 'gemini-3.6-flash',
-    fallbackModel: 'gemini-flash-latest',
+    defaultModel: 'gemini-2.5-flash-lite',
+    fallbackModel: 'gemini-3.5-flash',
+    candidateModels: [
+        'gemini-2.5-flash-lite',
+        'gemini-3.5-flash',
+        'gemini-3.7-flash',
+        'gemini-flash-latest',
+    ],
     temperature: 0.2, // Low temperature for factual, analytical consistency
     maxTokens: 4096,
     timeoutMs: 25000,

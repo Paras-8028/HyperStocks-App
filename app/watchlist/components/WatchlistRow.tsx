@@ -54,25 +54,25 @@ const WatchlistRow = ({
 
 
     return (
-        <div className="rounded-xl border border-gray-800 bg-gradient-to-b from-black to-gray-900 p-5 space-y-5">
+        <div className="rounded-2xl border border-gray-800/80 bg-gray-900/60 p-5 space-y-4 backdrop-blur shadow-lg hover:border-gray-700/80 transition">
 
             {/* HEADER */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h3 className="text-lg font-semibold text-white">
+                    <h3 className="text-lg font-bold text-gray-100 tracking-wide">
                         {item.symbol}
                     </h3>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-xs text-gray-400">
                         {item.company}
                     </p>
 
                     {price !== null && (
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-2 mt-1.5 font-mono tabular-nums">
               <span
                   className={cn(
-                      "text-xl font-semibold",
-                      direction === "up" && "text-green-400",
-                      direction === "down" && "text-red-400"
+                      "text-xl font-bold tracking-tight",
+                      direction === "up" && "text-emerald-400",
+                      direction === "down" && "text-rose-400"
                   )}
               >
                 ${price.toFixed(2)}
@@ -81,11 +81,11 @@ const WatchlistRow = ({
                             {percent !== null && (
                                 <span
                                     className={cn(
-                                        "text-sm font-medium",
-                                        isUp ? "text-green-400" : "text-red-400"
+                                        "text-xs font-semibold px-2 py-0.5 rounded-md border",
+                                        isUp ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/25" : "text-rose-400 bg-rose-500/10 border-rose-500/25"
                                     )}
                                 >
-                  {isUp ? "▲" : "▼"} {percent.toFixed(2)}%
+                  {isUp ? "+" : ""}{percent.toFixed(2)}%
                 </span>
                             )}
                         </div>

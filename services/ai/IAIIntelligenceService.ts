@@ -35,4 +35,10 @@ export interface IAIIntelligenceService {
         messages: CopilotMessage[],
         context?: CopilotContext
     ): Promise<ApiResult<CopilotMessage>>;
+
+    generateCompletion(
+        prompt: string,
+        systemInstruction?: string
+    ): Promise<ApiResult<string>>;
 }
+

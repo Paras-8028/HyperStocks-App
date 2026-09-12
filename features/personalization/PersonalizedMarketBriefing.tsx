@@ -100,7 +100,7 @@ export function PersonalizedMarketBriefing({
             </div>
 
             <h4 className="text-sm font-semibold text-gray-200">
-                "{briefing.headline}"
+                &ldquo;{briefing.headline}&rdquo;
             </h4>
 
             {/* Insights grid */}

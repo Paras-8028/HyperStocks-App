@@ -12,3 +12,7 @@ export function getNewsService(): INewsService {
 
 export * from './INewsService';
 export * from './FinnhubNewsService';
+export * from './NewsAnalyzerService';
+export * from './NewsClusteringService';
+export * from './NewsIntelligenceService';
+

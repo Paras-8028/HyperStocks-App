@@ -28,7 +28,6 @@ import {
     Zap,
 } from 'lucide-react';
 import { AIThesisCardSkeleton } from '@/components/common/LoadingSkeleton';
-import { ErrorState } from '@/components/common/ErrorState';
 
 export interface StockIntelligencePageProps {
     symbol: string;
@@ -72,19 +71,34 @@ export function StockIntelligencePage({
             });
 
             if (!res.ok) {
-                const text = await res.text().catch(() => '');
-                throw new Error(text || `Server responded with ${res.status}`);
+                let errorMsg = `Server responded with ${res.status}`;
+                try {
+                    const raw = await res.text();
+                    const parsed = JSON.parse(raw);
+                    if (parsed?.error) {
+                        errorMsg = typeof parsed.error === 'string' ? parsed.error : JSON.stringify(parsed.error);
+                    }
+                } catch {}
+                throw new Error(errorMsg);
             }
 
             const data = await res.json();
             if (data.success && data.data) {
                 setAnalysis(data.data);
+                setError(null);
             } else {
                 throw new Error(data.error || 'Failed to synthesize stock intelligence');
             }
         } catch (err: any) {
             console.error('fetchAnalysis error:', err);
-            setError(err?.message || 'Unable to generate AI analysis');
+            const msg = err?.message || 'Unable to generate AI analysis';
+            // Extract core message if JSON string
+            let cleanMsg = msg;
+            try {
+                const parsed = JSON.parse(msg);
+                if (parsed?.error) cleanMsg = typeof parsed.error === 'string' ? parsed.error : parsed.error?.message || cleanMsg;
+            } catch {}
+            setError(cleanMsg);
         } finally {
             setLoading(false);
         }
@@ -181,7 +195,7 @@ export function StockIntelligencePage({
                         <Sparkles className="h-4 w-4 text-emerald-400 animate-pulse" />
                         AI Stock Intelligence Engine
                         <span className="text-gray-600">•</span>
-                        <span className="text-gray-400 font-mono">Gemini 3.6 Flash</span>
+                        <span className="text-gray-400 font-mono">Gemini Flash</span>
                     </div>
                     <h1 className="text-2xl font-bold text-gray-100 flex items-center gap-2">
                         {displayName}
@@ -211,14 +225,24 @@ export function StockIntelligencePage({
             {loading && <AIThesisCardSkeleton />}
 
             {!loading && error && (
-                <ErrorState
-                    title="AI Analysis Failed"
-                    message={error}
-                    onRetry={fetchAnalysis}
-                />
+                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+                    <div className="flex items-center gap-2.5">
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
+                        <div>
+                            <span className="font-semibold text-amber-300">Live AI Synthesis Notice: </span>
+                            <span>{error.length > 140 ? 'AI free tier rate-limit reached. Displaying deterministic market and fundamental models below.' : error}</span>
+                        </div>
+                    </div>
+                    <button
+                        onClick={fetchAnalysis}
+                        className="rounded-xl border border-amber-500/30 bg-amber-500/20 px-3.5 py-1.5 font-bold hover:bg-amber-500/30 transition text-amber-200 shrink-0 text-xs shadow"
+                    >
+                        Retry AI
+                    </button>
+                </div>
             )}
 
-            {!loading && !error && (
+            {!loading && (
                 <div className="space-y-6">
                     {/* 1. AI Stock Summary Card */}
                     <div className="rounded-2xl border border-emerald-500/25 bg-emerald-950/15 p-6 backdrop-blur shadow-lg space-y-3">

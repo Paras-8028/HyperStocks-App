@@ -1,20 +1,16 @@
 import { getUserWatchlist } from "@/lib/actions/watchlist.actions";
-import { auth } from "@/lib/better-auth/auth";
+import { auth } from "@clerk/nextjs/server";
 import WatchlistTabs from "./components/WatchlistTabs";
 import WatchlistEmpty from "./components/WatchlistEmpty";
-import { headers } from "next/headers";
 
 const WatchlistPage = async () => {
-    // ✅ REQUIRED for better-auth
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+    const { userId } = await auth();
 
-    if (!session?.user?.email) {
+    if (!userId) {
         return <WatchlistEmpty />;
     }
 
-    const watchlist = await getUserWatchlist(session.user.email);
+    const watchlist = await getUserWatchlist(userId);
 
     if (!watchlist || watchlist.length === 0) {
         return <WatchlistEmpty />;

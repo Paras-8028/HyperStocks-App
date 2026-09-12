@@ -22,10 +22,15 @@ export default function SearchCommand({
                                           initialStocks,
                                       }: SearchCommandProps) {
     const [open, setOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(false);
     const [stocks, setStocks] =
         useState<StockWithWatchlistStatus[]>(initialStocks);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const isSearchMode = !!searchTerm.trim();
     const displayStocks = isSearchMode
@@ -121,93 +126,95 @@ export default function SearchCommand({
                 </Button>
             )}
 
-            <CommandDialog
-                open={open}
-                onOpenChange={setOpen}
-                className="search-dialog"
-            >
-                <div className="search-field">
-                    <CommandInput
-                        value={searchTerm}
-                        onValueChange={setSearchTerm}
-                        placeholder="Search stocks..."
-                        className="search-input"
-                    />
-                    {loading && <Loader2 className="search-loader" />}
-                </div>
+            {mounted && (
+                <CommandDialog
+                    open={open}
+                    onOpenChange={setOpen}
+                    className="search-dialog"
+                >
+                    <div className="search-field">
+                        <CommandInput
+                            value={searchTerm}
+                            onValueChange={setSearchTerm}
+                            placeholder="Search stocks..."
+                            className="search-input"
+                        />
+                        {loading && <Loader2 className="search-loader" />}
+                    </div>
 
-                <CommandList className="search-list">
-                    {loading ? (
-                        <CommandEmpty>
-                            Loading stocks...
-                        </CommandEmpty>
-                    ) : displayStocks.length === 0 ? (
-                        <div className="search-list-indicator">
-                            {isSearchMode
-                                ? "No results found"
-                                : "No stocks available"}
-                        </div>
-                    ) : (
-                        <ul>
-                            <div className="search-count">
+                    <CommandList className="search-list">
+                        {loading ? (
+                            <CommandEmpty>
+                                Loading stocks...
+                            </CommandEmpty>
+                        ) : displayStocks.length === 0 ? (
+                            <div className="search-list-indicator">
                                 {isSearchMode
-                                    ? "Search results"
-                                    : "Popular stocks"}{" "}
-                                ({displayStocks.length})
+                                    ? "No results found"
+                                    : "No stocks available"}
                             </div>
+                        ) : (
+                            <ul>
+                                <div className="search-count">
+                                    {isSearchMode
+                                        ? "Search results"
+                                        : "Popular stocks"}{" "}
+                                    ({displayStocks.length})
+                                </div>
 
-                            {displayStocks.map((stock) => (
-                                <li
-                                    key={stock.symbol}
-                                    className="search-item flex items-center justify-between gap-3"
-                                >
-                                    <Link
-                                        href={`/stocks/${stock.symbol}`}
-                                        onClick={handleSelectStock}
-                                        className="search-item-link flex items-center gap-3 flex-1"
+                                {displayStocks.map((stock) => (
+                                    <li
+                                        key={stock.symbol}
+                                        className="search-item flex items-center justify-between gap-3"
                                     >
-                                        <TrendingUp className="h-4 w-4 text-gray-500" />
-                                        <div className="flex-1">
-                                            <div className="search-item-name">
-                                                {stock.name}
+                                        <Link
+                                            href={`/stocks/${stock.symbol}`}
+                                            onClick={handleSelectStock}
+                                            className="search-item-link flex items-center gap-3 flex-1"
+                                        >
+                                            <TrendingUp className="h-4 w-4 text-gray-500" />
+                                            <div className="flex-1">
+                                                <div className="search-item-name">
+                                                    {stock.name}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                    {stock.symbol} |{" "}
+                                                    {stock.exchange} |{" "}
+                                                    {stock.type}
+                                                </div>
                                             </div>
-                                            <div className="text-sm text-gray-500">
-                                                {stock.symbol} |{" "}
-                                                {stock.exchange} |{" "}
-                                                {stock.type}
-                                            </div>
+                                        </Link>
+
+                                        <div
+                                            onClick={(e) =>
+                                                e.stopPropagation()
+                                            }
+                                            className="shrink-0"
+                                        >
+                                            <WatchlistButton
+                                                type="icon"
+                                                symbol={stock.symbol}
+                                                company={stock.name}
+                                                isInWatchlist={stock.isInWatchlist}
+                                                onWatchlistChange={(symbol, added) => {
+                                                    setStocks(prev =>
+                                                        prev.map(s =>
+                                                            s.symbol === symbol
+                                                                ? { ...s, isInWatchlist: added }
+                                                                : s
+                                                        )
+                                                    );
+                                                }}
+                                            />
+
                                         </div>
-                                    </Link>
-
-                                    <div
-                                        onClick={(e) =>
-                                            e.stopPropagation()
-                                        }
-                                        className="shrink-0"
-                                    >
-                                        <WatchlistButton
-                                            type="icon"
-                                            symbol={stock.symbol}
-                                            company={stock.name}
-                                            isInWatchlist={stock.isInWatchlist}
-                                            onWatchlistChange={(symbol, added) => {
-                                                setStocks(prev =>
-                                                    prev.map(s =>
-                                                        s.symbol === symbol
-                                                            ? { ...s, isInWatchlist: added }
-                                                            : s
-                                                    )
-                                                );
-                                            }}
-                                        />
-
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </CommandList>
-            </CommandDialog>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </CommandList>
+                </CommandDialog>
+            )}
         </>
     );
 }

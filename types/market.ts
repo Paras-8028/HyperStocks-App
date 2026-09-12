@@ -7,6 +7,7 @@ export interface StockQuote {
     lowPrice?: number;
     openPrice?: number;
     previousClose?: number;
+    volume?: number;
     timestamp?: number;
 }
 

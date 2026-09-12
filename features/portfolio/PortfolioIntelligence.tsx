@@ -217,7 +217,7 @@ export function PortfolioIntelligence() {
                 {/* 2. Today's Performance */}
                 <div className="rounded-2xl border border-gray-800 bg-gray-900/80 p-5 backdrop-blur shadow-lg space-y-1">
                     <div className="flex items-center justify-between text-gray-400 text-xs font-semibold">
-                        <span>Today's Movement</span>
+                        <span>Today&apos;s Movement</span>
                         {dailyGainPositive ? (
                             <ArrowUpRight className="h-4 w-4 text-emerald-400" />
                         ) : (

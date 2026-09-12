@@ -1,19 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getPersonalizationService } from '@/services/personalization';
-import { auth } from '@/lib/better-auth/auth';
-import { headers } from 'next/headers';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { DEFAULT_USER_PREFERENCES } from '@/types/personalization';
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
+        const { userId } = await auth();
         const personalizationService = getPersonalizationService();
 
-        if (session?.user?.email) {
-            const res = await personalizationService.getUserProfile(session.user.email);
+        if (userId) {
+            const res = await personalizationService.getUserProfile(userId);
             return NextResponse.json(res);
         }
 
@@ -33,16 +29,20 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
+        const { userId } = await auth();
+        if (!userId) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
 
-        const email = session?.user?.email || body.email || 'guest';
+        const clerkUser = await currentUser();
+        const body = await req.json();
         const personalizationService = getPersonalizationService();
 
-        const updated = await personalizationService.updatePreferences(email, {
+        const updated = await personalizationService.updatePreferences(userId, {
             ...body,
+            userId,
+            email: clerkUser?.primaryEmailAddress?.emailAddress || body.email || '',
+            name: clerkUser?.fullName || clerkUser?.firstName || body.name || 'Investor',
             onboardingCompleted: true,
         });
 

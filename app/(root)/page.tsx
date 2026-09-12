@@ -6,8 +6,7 @@ import { AIOpportunitiesRadar } from "@/features/dashboard/AIOpportunitiesRadar"
 import { RiskRadar } from "@/features/dashboard/RiskRadar";
 import { AIInsightsFeed } from "@/features/dashboard/AIInsightsFeed";
 import { AIAssistantChat } from "@/features/ai-assistant/AIAssistantChat";
-import { auth } from "@/lib/better-auth/auth";
-import { headers } from "next/headers";
+import { auth } from "@clerk/nextjs/server";
 import { getWatchlistSymbolsByEmail } from "@/lib/actions/watchlist.actions";
 import { getPersonalizationService } from "@/services/personalization";
 
@@ -16,12 +15,10 @@ export default async function DashboardPage() {
     let userPreferences: any = undefined;
 
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-        if (session?.user?.email) {
-            watchlistSymbols = await getWatchlistSymbolsByEmail(session.user.email);
-            const prefRes = await getPersonalizationService().getUserProfile(session.user.email);
+        const { userId } = await auth();
+        if (userId) {
+            watchlistSymbols = await getWatchlistSymbolsByEmail(userId);
+            const prefRes = await getPersonalizationService().getUserProfile(userId);
             if (prefRes.success) {
                 userPreferences = prefRes.data;
             }

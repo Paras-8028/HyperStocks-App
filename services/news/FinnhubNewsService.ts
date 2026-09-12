@@ -134,4 +134,13 @@ export class FinnhubNewsService implements INewsService {
             data: merged.slice(0, 10),
         };
     }
+
+    async getNewsIntelligence(
+        options?: import('@/types/news').NewsIntelligenceOptions
+    ): Promise<ApiResult<import('@/types/news').NewsIntelligenceResponse>> {
+        const { NewsIntelligenceService } = await import('./NewsIntelligenceService');
+        const intelligenceService = new NewsIntelligenceService(this);
+        return intelligenceService.getNewsIntelligence(options);
+    }
 }
+

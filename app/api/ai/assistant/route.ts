@@ -1,35 +1,23 @@
 import { NextResponse } from 'next/server';
 import { AIProviderFactory } from '@/services/ai/providers/AIProviderFactory';
 import { AIContextBuilder } from '@/services/ai/context/AIContextBuilder';
-import { auth } from '@/lib/better-auth/auth';
-import { headers } from 'next/headers';
-import { connectToDatabase } from '@/database/mongoose';
+import { auth, currentUser } from '@clerk/nextjs/server';
 
 export const runtime = 'nodejs';
 
 async function resolveUserIdentity(): Promise<{ userId?: string; userEmail?: string }> {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
+        const { userId } = await auth();
+        if (!userId) return {};
 
-        if (session?.user?.email) {
-            const userEmail = session.user.email;
-            let userId = session.user.id;
-
-            const mongoose = await connectToDatabase();
-            const db = mongoose.connection.db;
-            if (db) {
-                const u = await db.collection('user').findOne({ email: userEmail });
-                if (u) userId = u.id || String(u._id);
-            }
-
-            return { userId, userEmail };
-        }
+        const clerkUser = await currentUser();
+        return {
+            userId,
+            userEmail: clerkUser?.primaryEmailAddress?.emailAddress,
+        };
     } catch {
-        // Fallback for unauthenticated access
+        return {};
     }
-    return {};
 }
 
 export async function POST(req: Request) {
@@ -47,8 +35,11 @@ export async function POST(req: Request) {
         const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
         const queryText = lastUserMessage?.content || '';
 
-        // 1. Resolve user context
+        // 1. Resolve user context via Clerk
         const { userId, userEmail } = await resolveUserIdentity();
+        if (!userId) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
 
         // 2. Build live dynamic financial context
         const { contextData, formattedContextString } = await AIContextBuilder.buildContext(

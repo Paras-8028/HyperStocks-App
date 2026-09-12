@@ -4,12 +4,16 @@ import { getMarketService } from '@/services/market';
 import { getNewsService } from '@/services/news';
 import { AIProviderFactory } from '@/services/ai/providers/AIProviderFactory';
 import { DETAILED_STOCK_INTELLIGENCE_PROMPT } from '@/services/ai/prompts';
-import { auth } from '@/lib/better-auth/auth';
-import { headers } from 'next/headers';
+import { auth } from '@clerk/nextjs/server';
 import { getPersonalizationService } from '@/services/personalization';
 
 export async function POST(req: Request) {
     try {
+        const { userId } = await auth();
+        if (!userId) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await req.json();
         const { type = 'stock_thesis', symbol, context, positions, watchlistSymbols, userPreferences } = body;
         const aiService = getAIService();

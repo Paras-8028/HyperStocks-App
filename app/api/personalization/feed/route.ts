@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getPersonalizationService } from '@/services/personalization';
-import { auth } from '@/lib/better-auth/auth';
-import { headers } from 'next/headers';
+import { auth } from '@clerk/nextjs/server';
 import { OpportunityItem } from '@/types/ai';
 import { RawInsightItem } from '@/services/personalization/InsightRanking';
 import { RiskRadarItem } from '@/types/ai';
@@ -196,15 +195,12 @@ export async function POST(req: Request) {
         const body = await req.json().catch(() => ({}));
         const { watchlistSymbols = [], holdings = [], preferences: clientPrefs } = body;
 
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
+        const { userId } = await auth();
+        const userIdentifier = userId || 'guest';
         const personalizationService = getPersonalizationService();
-        const userEmail = session?.user?.email || 'guest';
 
         // Get server preferences or merge with client preferences
-        const prefRes = await personalizationService.getUserProfile(userEmail);
+        const prefRes = await personalizationService.getUserProfile(userIdentifier);
         const serverPrefs = prefRes.success ? prefRes.data : undefined;
         const activePrefs = {
             ...(serverPrefs || {}),
@@ -212,7 +208,7 @@ export async function POST(req: Request) {
         };
 
         const context = await personalizationService.getPersonalizationContext(
-            userEmail,
+            userIdentifier,
             watchlistSymbols,
             holdings
         );

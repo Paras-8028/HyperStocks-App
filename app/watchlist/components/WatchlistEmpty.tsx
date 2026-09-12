@@ -1,12 +1,18 @@
+'use client';
+
+import { EmptyState } from '@/components/common/EmptyState';
+import { Star } from 'lucide-react';
+
 const WatchlistEmpty = () => {
     return (
-        <div className="container py-20 text-center">
-            <h2 className="text-xl font-semibold text-gray-200 mb-2">
-                Your watchlist is empty
-            </h2>
-            <p className="text-gray-500">
-                Search stocks and add them ⭐ to start tracking
-            </p>
+        <div className="container max-w-2xl py-16">
+            <EmptyState
+                title="Your Watchlist is Empty"
+                description="You are not tracking any stocks yet. Search for equities like NVDA, AAPL, or MSFT and click the star icon to start monitoring."
+                actionLabel="Explore Market Leaders"
+                actionHref="/"
+                icon={Star}
+            />
         </div>
     );
 };

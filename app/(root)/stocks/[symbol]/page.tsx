@@ -29,10 +29,10 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
     const profile = profileRes.success ? profileRes.data : undefined;
 
     const card =
-        "rounded-xl border border-gray-800 bg-gray-800/60 backdrop-blur p-4";
+        "rounded-2xl border border-gray-800/80 bg-gray-900/60 backdrop-blur-md p-4 shadow-xl";
 
     return (
-        <div className="min-h-screen bg-gray-900">
+        <div className="min-h-screen bg-gray-950 text-gray-100">
             <div className="container py-6 lg:py-8 space-y-8">
                 {/* Comprehensive 8-Pillar AI Stock Intelligence System */}
                 <StockIntelligencePage

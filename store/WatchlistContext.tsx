@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { useWatchlist, WatchlistItem } from '@/hooks/useWatchlist';
 
 interface WatchlistContextValue {

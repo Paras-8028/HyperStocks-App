@@ -298,21 +298,19 @@ export function SmartAlertCenter() {
                             <div className="flex gap-1 bg-gray-900/80 p-0.5 rounded-lg border border-gray-800">
                                 <button
                                     onClick={() => setActiveTab('feed')}
-                                    className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
-                                        activeTab === 'feed'
+                                    className={`px-3 py-1 rounded-md text-xs font-semibold transition ${activeTab === 'feed'
                                             ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                                             : 'text-gray-400 hover:text-gray-200'
-                                    }`}
+                                        }`}
                                 >
                                     Alerts Feed ({alerts.length})
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('preferences')}
-                                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition ${
-                                        activeTab === 'preferences'
+                                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition ${activeTab === 'preferences'
                                             ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                                             : 'text-gray-400 hover:text-gray-200'
-                                    }`}
+                                        }`}
                                 >
                                     <SlidersHorizontal className="h-3 w-3" />
                                     Preferences
@@ -370,11 +368,10 @@ export function SmartAlertCenter() {
                                     <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
                                         <button
                                             onClick={() => setSelectedCategory('all')}
-                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition ${
-                                                selectedCategory === 'all'
+                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition ${selectedCategory === 'all'
                                                     ? 'bg-gray-200 text-gray-950 font-bold'
                                                     : 'bg-gray-900 text-gray-400 border border-gray-800 hover:bg-gray-800'
-                                            }`}
+                                                }`}
                                         >
                                             All ({alerts.length})
                                         </button>
@@ -387,11 +384,10 @@ export function SmartAlertCenter() {
                                                 <button
                                                     key={catKey}
                                                     onClick={() => setSelectedCategory(catKey)}
-                                                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition ${
-                                                        isSel
+                                                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition ${isSel
                                                             ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold'
                                                             : 'bg-gray-900 text-gray-400 border border-gray-800 hover:bg-gray-800'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     <meta.icon className={`h-3 w-3 ${meta.color}`} />
                                                     {meta.label}
@@ -409,7 +405,7 @@ export function SmartAlertCenter() {
                                                 <CheckCheck className="h-6 w-6" />
                                             </div>
                                             <h3 className="text-sm font-semibold text-gray-300">
-                                                You're all caught up
+                                                You&apos;re all caught up
                                             </h3>
                                             <p className="text-xs text-gray-500 max-w-xs mt-1">
                                                 No smart alerts matching your current category filter or severity criteria.
@@ -425,11 +421,10 @@ export function SmartAlertCenter() {
                                             return (
                                                 <div
                                                     key={alert.id}
-                                                    className={`group relative rounded-2xl border transition-all duration-200 p-4 ${
-                                                        alert.isRead
+                                                    className={`group relative rounded-2xl border transition-all duration-200 p-4 ${alert.isRead
                                                             ? 'bg-gray-900/40 border-gray-800/60 opacity-85'
                                                             : 'bg-gray-900/90 border-gray-700 shadow-md shadow-black/40'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {/* Top Row: Meta Tags, Priority, Time */}
                                                     <div className="flex items-center justify-between gap-2 mb-2">
@@ -460,13 +455,12 @@ export function SmartAlertCenter() {
                                                         <div className="flex items-center gap-2">
                                                             {/* Priority Score Indicator */}
                                                             <span
-                                                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                                                                    alert.priorityScore >= 75
+                                                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${alert.priorityScore >= 75
                                                                         ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                                                                         : alert.priorityScore >= 50
-                                                                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                                        : 'bg-gray-800 text-gray-400 border-gray-700'
-                                                                }`}
+                                                                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                                            : 'bg-gray-800 text-gray-400 border-gray-700'
+                                                                    }`}
                                                                 title={`Priority Score: ${alert.priorityScore}/100`}
                                                             >
                                                                 P{alert.priorityScore}
@@ -500,7 +494,7 @@ export function SmartAlertCenter() {
                                                             <span>WHY IT MATTERS:</span>
                                                         </div>
                                                         <p className="text-[11px] text-gray-400 leading-relaxed italic">
-                                                            "{alert.whyItMatters}"
+                                                            &ldquo;{alert.whyItMatters}&rdquo;
                                                         </p>
                                                     </div>
 
@@ -524,11 +518,10 @@ export function SmartAlertCenter() {
 
                                                         <button
                                                             onClick={() => markRead(alert.id)}
-                                                            className={`inline-flex items-center gap-1 text-[10px] font-medium transition ${
-                                                                alert.isRead
+                                                            className={`inline-flex items-center gap-1 text-[10px] font-medium transition ${alert.isRead
                                                                     ? 'text-gray-600 cursor-default'
                                                                     : 'text-gray-400 hover:text-emerald-400'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             <Check className="h-3 w-3" />
                                                             <span>{alert.isRead ? 'Read' : 'Mark as read'}</span>
@@ -590,7 +583,7 @@ export function SmartAlertCenter() {
                                                     <input
                                                         type="checkbox"
                                                         checked={isChecked}
-                                                        onChange={() => {}}
+                                                        onChange={() => { }}
                                                         className="rounded border-gray-700 bg-gray-800 text-emerald-500 focus:ring-0 h-4 w-4"
                                                     />
                                                 </div>

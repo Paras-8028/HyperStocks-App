@@ -160,7 +160,7 @@ export function WatchlistIntelligenceGrid({
                         <div className="rounded-xl bg-gray-850/50 p-3 border border-gray-800 space-y-1">
                             <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
                                 <Sparkles className="h-3 w-3" />
-                                Why It's Moving
+                                Why It&apos;s Moving
                             </div>
                             <p className="text-xs text-gray-300 leading-relaxed">
                                 {item.movementReason}

@@ -34,10 +34,15 @@ export interface SmartAlertItem {
     action: SmartAlertAction;
 }
 
+export type EmailAlertFrequency = 'instant' | 'important_only' | 'daily_digest';
+
 export interface AlertNotificationPreferences {
     enabledCategories: Record<SmartAlertCategory, boolean>;
     minSeverity: SmartAlertSeverity;
     emailDigest: boolean;
+    emailAlertsEnabled?: boolean;
+    emailCategories?: Record<SmartAlertCategory, boolean>;
+    emailFrequency?: EmailAlertFrequency;
     pushEnabled: boolean;
     quietHours?: {
         enabled: boolean;
@@ -59,6 +64,18 @@ export const DEFAULT_ALERT_PREFERENCES: AlertNotificationPreferences = {
     },
     minSeverity: 'advisory',
     emailDigest: true,
+    emailAlertsEnabled: true,
+    emailCategories: {
+        price: true,
+        percentage_movement: true,
+        volume: true,
+        technical_signal: true,
+        news: true,
+        earnings: true,
+        portfolio_risk: true,
+        ai_insight: true,
+    },
+    emailFrequency: 'instant',
     pushEnabled: true,
     quietHours: {
         enabled: false,

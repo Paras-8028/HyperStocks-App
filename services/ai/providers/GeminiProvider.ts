@@ -33,8 +33,13 @@ export class GeminiProvider implements IAIProvider {
             };
         }
 
-        const model: string = AI_CONFIG.defaultModel;
-        const url = `${this.baseUrl}/${model}:generateContent?key=${this.apiKey}`;
+        const candidateModels = Array.from(
+            new Set([
+                AI_CONFIG.defaultModel,
+                AI_CONFIG.fallbackModel,
+                ...(AI_CONFIG.candidateModels || []),
+            ])
+        );
 
         const payload: any = {
             contents: this.formatContents(req),
@@ -50,73 +55,63 @@ export class GeminiProvider implements IAIProvider {
             };
         }
 
-        try {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                cache: 'no-store',
-            });
+        let lastStatus = 500;
+        let lastErrorText = '';
 
-            if (!res.ok) {
-                const text = await res.text().catch(() => '');
-                // Fallback to gemini-1.5-flash if 2.5 is unavailable
-                if (model !== AI_CONFIG.fallbackModel) {
-                    const fallbackUrl = `${this.baseUrl}/${AI_CONFIG.fallbackModel}:generateContent?key=${this.apiKey}`;
-                    const fbRes = await fetch(fallbackUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload),
-                        cache: 'no-store',
-                    });
-                    if (fbRes.ok) {
-                        const fbData = await fbRes.json();
-                        const fbText = fbData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                        return {
-                            success: true,
-                            data: {
-                                content: fbText,
-                                provider: this.name,
-                                model: AI_CONFIG.fallbackModel,
-                            },
-                        };
-                    }
+        for (const model of candidateModels) {
+            const url = `${this.baseUrl}/${model}:generateContent?key=${this.apiKey}`;
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    cache: 'no-store',
+                });
+
+                if (!res.ok) {
+                    lastStatus = res.status;
+                    const errRaw = await res.text().catch(() => '');
+                    lastErrorText = errRaw;
+                    try {
+                        const parsed = JSON.parse(errRaw);
+                        if (parsed?.error?.message) {
+                            lastErrorText = parsed.error.message;
+                        }
+                    } catch {}
+
+                    console.warn(`[GeminiProvider] Model ${model} returned HTTP ${res.status}. Trying next candidate model...`);
+                    continue;
                 }
+
+                const data = await res.json();
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!text) {
+                    console.warn(`[GeminiProvider] Model ${model} returned empty candidates. Trying next candidate model...`);
+                    continue;
+                }
+
                 return {
-                    success: false,
-                    error: `Gemini API error ${res.status}: ${text}`,
-                    code: res.status,
+                    success: true,
+                    data: {
+                        content: text,
+                        provider: this.name,
+                        model,
+                        finishReason: data?.candidates?.[0]?.finishReason,
+                    },
                 };
+            } catch (err: any) {
+                console.warn(`[GeminiProvider] Model ${model} fetch exception:`, err?.message);
+                lastErrorText = err?.message || 'Network error';
+                continue;
             }
-
-            const data = await res.json();
-            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-            if (!text) {
-                return {
-                    success: false,
-                    error: 'Gemini returned an empty response',
-                    code: 'EMPTY_RESPONSE',
-                };
-            }
-
-            return {
-                success: true,
-                data: {
-                    content: text,
-                    provider: this.name,
-                    model,
-                    finishReason: data?.candidates?.[0]?.finishReason,
-                },
-            };
-        } catch (err: any) {
-            console.error('GeminiProvider error:', err);
-            return {
-                success: false,
-                error: err?.message || 'Failed to call Gemini API',
-                code: 'NETWORK_ERROR',
-            };
         }
+
+        return {
+            success: false,
+            error: `Gemini API error (${lastStatus}): ${lastErrorText || 'All models exceeded quota or experienced high demand'}`,
+            code: lastStatus,
+        };
     }
 
     async generateStream(req: AIProviderRequest): Promise<ReadableStream<Uint8Array>> {
@@ -124,8 +119,13 @@ export class GeminiProvider implements IAIProvider {
             throw new Error('GEMINI_API_KEY environment variable is not configured');
         }
 
-        const model = AI_CONFIG.defaultModel;
-        const url = `${this.baseUrl}/${model}:streamGenerateContent?alt=sse&key=${this.apiKey}`;
+        const candidateModels = Array.from(
+            new Set([
+                AI_CONFIG.defaultModel,
+                AI_CONFIG.fallbackModel,
+                ...(AI_CONFIG.candidateModels || []),
+            ])
+        );
 
         const payload: any = {
             contents: this.formatContents(req),
@@ -141,16 +141,32 @@ export class GeminiProvider implements IAIProvider {
             };
         }
 
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            cache: 'no-store',
-        });
+        let res: Response | null = null;
+        let lastError = '';
 
-        if (!res.ok) {
-            const errText = await res.text().catch(() => '');
-            throw new Error(`Gemini Stream Error ${res.status}: ${errText}`);
+        for (const model of candidateModels) {
+            const url = `${this.baseUrl}/${model}:streamGenerateContent?alt=sse&key=${this.apiKey}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    cache: 'no-store',
+                });
+
+                if (response.ok && response.body) {
+                    res = response;
+                    break;
+                } else {
+                    lastError = await response.text().catch(() => '');
+                }
+            } catch (err: any) {
+                lastError = err?.message || 'Stream error';
+            }
+        }
+
+        if (!res || !res.ok) {
+            throw new Error(`Gemini Stream Error: ${lastError || 'All models exhausted'}`);
         }
 
         const encoder = new TextEncoder();
