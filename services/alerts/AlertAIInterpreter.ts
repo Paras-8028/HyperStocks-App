@@ -1,5 +1,5 @@
 import { getAIService } from '@/services/ai';
-import { CollectedAlertContext } from './AlertContextCollector';
+import { CollectedAlertContext } from '@/services/alerts/AlertContextCollector';
 import { SmartAlertCategory } from '@/types/alerts';
 
 export interface AlertAIInterpretationResult {

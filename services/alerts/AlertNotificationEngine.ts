@@ -4,8 +4,8 @@ import { AlertDeliveryLogModel } from '@/database/models/alert_delivery_log.mode
 import { AlertPreferenceModel } from '@/database/models/alert_preference.model';
 import { getMarketService } from '@/services/market';
 import { getEmailService } from '@/services/email';
-import { AlertContextCollector } from './AlertContextCollector';
-import { AlertAIInterpreter } from './AlertAIInterpreter';
+import { AlertContextCollector } from '@/services/alerts/AlertContextCollector';
+import { AlertAIInterpreter } from '@/services/alerts/AlertAIInterpreter';
 import { SmartAlertCategory, DEFAULT_ALERT_PREFERENCES, AlertNotificationPreferences } from '@/types/alerts';
 import { AlertEmailData } from '@/types/email';
 

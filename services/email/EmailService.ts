@@ -1,7 +1,7 @@
 import { AlertEmailData, DailyDigestEmailData, EmailSendResult } from '@/types/email';
-import { getMailTransporter, getSenderEmail } from './mailer';
-import { buildAlertEmailHtml, generateAlertSubject } from './templates/alertEmailTemplate';
-import { buildDailyDigestEmailHtml } from './templates/dailyDigestTemplate';
+import { getMailTransporter, getSenderEmail } from '@/services/email/mailer';
+import { buildAlertEmailHtml, generateAlertSubject } from '@/services/email/templates/alertEmailTemplate';
+import { buildDailyDigestEmailHtml } from '@/services/email/templates/dailyDigestTemplate';
 
 export interface IEmailService {
     sendAlertEmail(data: AlertEmailData): Promise<EmailSendResult>;
