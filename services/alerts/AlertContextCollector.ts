@@ -46,7 +46,7 @@ export class AlertContextCollector {
                 userEmail = clerkUser.primaryEmailAddress?.emailAddress || clerkUser.emailAddresses?.[0]?.emailAddress || '';
                 userName = clerkUser.fullName || clerkUser.firstName || 'Investor';
             }
-        } catch (clerkErr) {
+        } catch {
             // Background or network fallback
         }
 

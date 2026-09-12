@@ -216,7 +216,8 @@ export function generateAlertSubject(data: AlertEmailData): string {
 
     switch (alertType) {
         case 'price':
-            return `🔔 ${ticker} crossed your $${typeof triggerValue === 'number' ? triggerValue.toFixed(2) : triggerValue} price alert`;
+            const direction = triggerCondition === 'below' ? 'below' : 'above';
+            return `🔔 ${ticker} crossed ${direction} your $${typeof triggerValue === 'number' ? triggerValue.toFixed(2) : triggerValue} price alert`;
 
         case 'percentage_movement':
             const isUp = (percentageChange ?? 0) >= 0;
