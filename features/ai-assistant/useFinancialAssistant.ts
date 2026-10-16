@@ -23,6 +23,7 @@ export function useFinancialAssistant(initialSymbol?: string) {
 
     const abortControllerRef = useRef<AbortController | null>(null);
     const isSendingRef = useRef(false);
+    const sendMessageRef = useRef<(query: string, currentSymbol?: string) => Promise<void>>(() => Promise.resolve());
 
     // Initial load from localStorage
     useEffect(() => {
@@ -221,7 +222,7 @@ export function useFinancialAssistant(initialSymbol?: string) {
                                 retryable: structured?.retryable ?? (res.status === 503),
                                 retryAfterSeconds: structured?.retryAfterSeconds,
                             },
-                            onRetry: () => sendMessage(query, currentSymbol),
+                            onRetry: () => sendMessageRef.current(query, currentSymbol),
                         },
                     ]);
                     return;
@@ -323,7 +324,7 @@ export function useFinancialAssistant(initialSymbol?: string) {
                         errorDetails: {
                             retryable: true,
                         },
-                        onRetry: () => sendMessage(query, currentSymbol),
+                        onRetry: () => sendMessageRef.current(query, currentSymbol),
                     },
                 ]);
             } finally {
@@ -335,6 +336,10 @@ export function useFinancialAssistant(initialSymbol?: string) {
         },
         [messages, loading, activeSessionId]
     );
+
+    useEffect(() => {
+        sendMessageRef.current = sendMessage;
+    }, [sendMessage]);
 
     const retryLastMessage = useCallback(() => {
         const lastUser = [...messages].reverse().find((m) => m.role === 'user');

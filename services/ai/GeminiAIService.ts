@@ -1,4 +1,3 @@
-import { ApiClient } from '@/services/api/apiClient';
 import { IAIIntelligenceService } from './IAIIntelligenceService';
 import { ApiResult } from '@/types/api';
 import {
