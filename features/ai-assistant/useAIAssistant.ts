@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { CopilotContext, CopilotMessage } from '@/types/ai';
 
 export function useAIAssistant(initialContext?: CopilotContext) {
-    const [messages, setMessages] = useState<CopilotMessage[]>([
+    const [messages, setMessages] = useState<CopilotMessage[]>(() => [
         {
             id: 'welcome-msg',
             role: 'assistant',
