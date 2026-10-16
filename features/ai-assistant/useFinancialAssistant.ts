@@ -22,6 +22,7 @@ export function useFinancialAssistant(initialSymbol?: string) {
     const [error, setError] = useState<string | null>(null);
 
     const abortControllerRef = useRef<AbortController | null>(null);
+    const isSendingRef = useRef(false);
 
     // Initial load from localStorage
     useEffect(() => {
@@ -124,12 +125,14 @@ export function useFinancialAssistant(initialSymbol?: string) {
         }
         setLoading(false);
         setIsStreaming(false);
+        isSendingRef.current = false;
     }, []);
 
     // Send message
     const sendMessage = useCallback(
         async (query: string, currentSymbol?: string) => {
-            if (!query.trim() || loading) return;
+            if (!query.trim() || loading || isSendingRef.current) return;
+            isSendingRef.current = true;
 
             const userMessage: AIMessageProps = {
                 role: 'user',
@@ -137,7 +140,9 @@ export function useFinancialAssistant(initialSymbol?: string) {
                 timestamp: Date.now(),
             };
 
-            const updatedMessages = [...messages, userMessage];
+            // Remove any empty or prior error assistant placeholders
+            const baseHistory = messages.filter((m) => m.content.trim() !== '');
+            const updatedMessages = [...baseHistory, userMessage];
             setMessages(updatedMessages);
             setLoading(true);
             setIsStreaming(true);
@@ -146,8 +151,15 @@ export function useFinancialAssistant(initialSymbol?: string) {
             const controller = new AbortController();
             abortControllerRef.current = controller;
 
-            // Placeholder for assistant message streaming in
-            const assistantMessageId = `asst-${Date.now()}`;
+            // Filter out errors and empty bubbles before sending to LLM context
+            const apiMessages = updatedMessages
+                .filter((m) => !m.isError && m.content.trim() !== '')
+                .map((m) => ({
+                    role: m.role,
+                    content: m.content,
+                }));
+
+            // Temporary placeholder for assistant streaming message
             const initialAssistantMsg: AIMessageProps = {
                 role: 'assistant',
                 content: '',
@@ -163,18 +175,56 @@ export function useFinancialAssistant(initialSymbol?: string) {
                     headers: { 'Content-Type': 'application/json' },
                     signal: controller.signal,
                     body: JSON.stringify({
-                        messages: updatedMessages.map((m) => ({
-                            role: m.role,
-                            content: m.content,
-                        })),
+                        messages: apiMessages,
                         currentSymbol,
                         stream: true,
                     }),
                 });
 
                 if (!res.ok) {
-                    const errText = await res.text().catch(() => '');
-                    throw new Error(errText || `Server error ${res.status}`);
+                    const rawText = await res.text().catch(() => '');
+                    let structured: any = null;
+                    try {
+                        const parsed = JSON.parse(rawText);
+                        structured = parsed?.error || parsed;
+                    } catch {}
+
+                    const errorCode = structured?.code;
+                    let message = structured?.message;
+
+                    if (res.status === 429) {
+                        if (errorCode === 'AI_QUOTA_EXCEEDED' || !message) {
+                            message = 'AI analysis is temporarily unavailable because the API usage limit has been reached. Please check back later.';
+                        } else {
+                            message = 'Too many requests were sent. Please wait a moment before trying again.';
+                        }
+                    } else if (res.status === 503) {
+                        message = 'This AI model is currently experiencing high demand. Please try again shortly.';
+                    } else if (res.status === 401 || res.status === 403) {
+                        message = 'AI authentication failed. Please verify your GEMINI_API_KEY environment variable.';
+                    } else if (!message) {
+                        message = `AI service returned an unexpected status (${res.status}). Please try again.`;
+                    }
+
+                    setError(message);
+
+                    // Replace streaming placeholder with friendly error bubble
+                    setMessages((prev) => [
+                        ...prev.filter((m) => m.content.trim() !== ''),
+                        {
+                            role: 'assistant',
+                            content: message,
+                            timestamp: Date.now(),
+                            isError: true,
+                            errorDetails: {
+                                code: errorCode,
+                                retryable: structured?.retryable ?? (res.status === 503),
+                                retryAfterSeconds: structured?.retryAfterSeconds,
+                            },
+                            onRetry: () => sendMessage(query, currentSymbol),
+                        },
+                    ]);
+                    return;
                 }
 
                 // Handle SSE Stream
@@ -256,27 +306,42 @@ export function useFinancialAssistant(initialSymbol?: string) {
                 });
             } catch (err: any) {
                 if (err?.name === 'AbortError') {
-                    // User aborted stream
+                    // User manually cancelled stream
+                    setMessages((prev) => prev.filter((m) => m.content.trim() !== ''));
                     return;
                 }
-                console.error('AI assistant error:', err);
-                setError(err?.message || 'Failed to complete query');
+
+                const fallbackMsg = 'Failed to communicate with AI Assistant. Please check your network connection and try again.';
+                setError(fallbackMsg);
                 setMessages((prev) => [
-                    ...prev.filter((m) => m.content !== ''),
+                    ...prev.filter((m) => m.content.trim() !== ''),
                     {
                         role: 'assistant',
-                        content: `⚠️ I encountered an issue retrieving real-time data for this query: ${err?.message || 'Connection error'}. Please verify your API key or try again shortly.`,
+                        content: fallbackMsg,
                         timestamp: Date.now(),
+                        isError: true,
+                        errorDetails: {
+                            retryable: true,
+                        },
+                        onRetry: () => sendMessage(query, currentSymbol),
                     },
                 ]);
             } finally {
                 setLoading(false);
                 setIsStreaming(false);
+                isSendingRef.current = false;
                 abortControllerRef.current = null;
             }
         },
         [messages, loading, activeSessionId]
     );
+
+    const retryLastMessage = useCallback(() => {
+        const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+        if (lastUser) {
+            sendMessage(lastUser.content, initialSymbol);
+        }
+    }, [messages, sendMessage, initialSymbol]);
 
     const sessions: ChatSession[] = threads.map((t) => ({
         id: t.id,
@@ -293,6 +358,7 @@ export function useFinancialAssistant(initialSymbol?: string) {
         isStreaming,
         error,
         sendMessage,
+        retryLastMessage,
         stopGeneration,
         selectSession,
         createNewChat,

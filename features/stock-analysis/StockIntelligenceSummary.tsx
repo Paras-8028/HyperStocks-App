@@ -43,20 +43,24 @@ export function StockIntelligenceSummary({
                 }),
             });
 
-            if (!res.ok) {
-                const text = await res.text().catch(() => '');
-                throw new Error(text || `Request failed with code ${res.status}`);
-            }
+            const data = await res.json().catch(() => null);
 
-            const data = await res.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Failed to synthesize thesis');
+            if (!res.ok || !data?.success) {
+                const message =
+                    data?.error?.message ||
+                    (typeof data?.error === 'string' ? data.error : null) ||
+                    (res.status === 429
+                        ? 'AI quota reached. Please try again later.'
+                        : res.status === 503
+                        ? 'AI model temporarily busy. Please retry shortly.'
+                        : 'Unable to connect to AI Intelligence engine');
+                setError(message);
+                return;
             }
 
             setThesis(data.data);
-        } catch (err: any) {
-            console.error('generateThesis error:', err);
-            setError(err?.message || 'Unable to connect to AI Intelligence engine');
+        } catch {
+            setError('Unable to connect to AI Intelligence engine. Please check your network connection.');
         } finally {
             setLoading(false);
         }

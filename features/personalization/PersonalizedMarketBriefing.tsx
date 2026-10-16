@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MarketBriefing } from '@/types/ai';
 import { UserPreferences } from '@/types/personalization';
 import { Sparkles, SunMedium, TrendingUp, Compass, ArrowUpRight } from 'lucide-react';
@@ -20,7 +20,11 @@ export function PersonalizedMarketBriefing({
     const [briefing, setBriefing] = useState<MarketBriefing | null>(null);
     const [loading, setLoading] = useState(false);
 
+    const inFlightRef = useRef(false);
+
     const loadBriefing = async () => {
+        if (inFlightRef.current) return;
+        inFlightRef.current = true;
         setLoading(true);
         try {
             const res = await fetch('/api/ai/analyze', {
@@ -32,14 +36,15 @@ export function PersonalizedMarketBriefing({
                     userPreferences,
                 }),
             });
-            const data = await res.json();
-            if (data.success) {
+            const data = await res.json().catch(() => null);
+            if (data?.success && data.data) {
                 setBriefing(data.data);
             }
-        } catch (e) {
-            console.error('Failed to load market briefing:', e);
+        } catch {
+            // Silently fall back if AI briefing is unavailable
         } finally {
             setLoading(false);
+            inFlightRef.current = false;
         }
     };
 

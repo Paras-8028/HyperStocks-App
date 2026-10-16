@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bot, Check, Copy, Sparkles, User } from 'lucide-react';
+import { Bot, Check, Copy, Sparkles, User, AlertTriangle, RotateCw } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -11,6 +11,13 @@ export interface AIMessageProps {
     timestamp?: number;
     model?: string;
     isStreaming?: boolean;
+    isError?: boolean;
+    errorDetails?: {
+        code?: string;
+        retryable?: boolean;
+        retryAfterSeconds?: number;
+    };
+    onRetry?: () => void;
 }
 
 export function AIMessage({
@@ -19,6 +26,9 @@ export function AIMessage({
     timestamp,
     model,
     isStreaming = false,
+    isError = false,
+    errorDetails,
+    onRetry,
 }: AIMessageProps) {
     const [copied, setCopied] = useState(false);
 
@@ -148,8 +158,14 @@ export function AIMessage({
             }`}
         >
             {!isUser && (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shadow-sm mt-0.5">
-                    <Bot className="h-4 w-4" />
+                <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl shadow-sm mt-0.5 ${
+                        isError
+                            ? 'bg-amber-500/15 border border-amber-500/30 text-amber-400'
+                            : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'
+                    }`}
+                >
+                    {isError ? <AlertTriangle className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                 </div>
             )}
 
@@ -157,6 +173,8 @@ export function AIMessage({
                 className={`relative group max-w-[85%] rounded-2xl p-4 space-y-2 backdrop-blur shadow-md ${
                     isUser
                         ? 'bg-emerald-600 text-white rounded-tr-none'
+                        : isError
+                        ? 'bg-amber-950/20 text-gray-200 border border-amber-500/30 rounded-tl-none'
                         : 'bg-gray-900/90 text-gray-200 border border-gray-800 rounded-tl-none'
                 }`}
             >
@@ -164,19 +182,23 @@ export function AIMessage({
                 {!isUser && (
                     <div className="flex items-center justify-between border-b border-gray-800/80 pb-2 text-[11px] text-gray-400">
                         <div className="flex items-center gap-1.5 font-medium">
-                            <span className="text-gray-200 font-semibold">HyperStocks Assistant</span>
-                            {model && <span className="text-[10px] text-gray-500">({model})</span>}
+                            <span className={isError ? 'text-amber-300 font-semibold' : 'text-gray-200 font-semibold'}>
+                                {isError ? 'AI Advisory Notice' : 'HyperStocks Assistant'}
+                            </span>
+                            {model && !isError && <span className="text-[10px] text-gray-500">({model})</span>}
                         </div>
 
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                                onClick={handleCopy}
-                                className="p-1 text-gray-400 hover:text-gray-200 rounded"
-                                title="Copy response"
-                            >
-                                {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                            </button>
-                        </div>
+                        {!isError && (
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={handleCopy}
+                                    className="p-1 text-gray-400 hover:text-gray-200 rounded"
+                                    title="Copy response"
+                                >
+                                    {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -187,6 +209,19 @@ export function AIMessage({
                         <span className="inline-block h-3.5 w-1.5 bg-emerald-400 animate-pulse ml-1" />
                     )}
                 </div>
+
+                {/* Retry action if available and retryable */}
+                {isError && onRetry && errorDetails?.retryable !== false && (
+                    <div className="pt-2">
+                        <button
+                            onClick={onRetry}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[11px] font-medium border border-amber-500/30 transition-colors"
+                        >
+                            <RotateCw className="h-3 w-3" />
+                            Retry Question
+                        </button>
+                    </div>
+                )}
 
                 {/* Timestamp */}
                 {timestamp && (

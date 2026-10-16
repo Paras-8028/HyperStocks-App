@@ -189,6 +189,9 @@ export function AIChat({
                                 timestamp={msg.timestamp}
                                 model={msg.model}
                                 isStreaming={msg.isStreaming}
+                                isError={msg.isError}
+                                errorDetails={msg.errorDetails}
+                                onRetry={msg.onRetry}
                             />
                         ))}
 

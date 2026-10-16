@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { DetailedStockIntelligence } from '@/types/ai';
 import { FinancialMetrics, StockQuote } from '@/types/market';
 import {
@@ -11,6 +11,7 @@ import {
     ArrowUpRight,
     BarChart2,
     CheckCircle2,
+    Clock,
     Compass,
     HelpCircle,
     Info,
@@ -29,12 +30,22 @@ import {
 } from 'lucide-react';
 import { AIThesisCardSkeleton } from '@/components/common/LoadingSkeleton';
 
+// Client-side in-memory session cache for stock analysis (15-min TTL)
+const analysisClientCache = new Map<string, { data: DetailedStockIntelligence; timestamp: number }>();
+
 export interface StockIntelligencePageProps {
     symbol: string;
     companyName?: string;
     quote?: StockQuote;
     metrics?: FinancialMetrics;
     className?: string;
+}
+
+interface StructuredErrorState {
+    code: string;
+    message: string;
+    retryable: boolean;
+    retryAfterSeconds?: number;
 }
 
 export function StockIntelligencePage({
@@ -48,13 +59,45 @@ export function StockIntelligencePage({
     const [analysis, setAnalysis] = useState<DetailedStockIntelligence | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [structuredError, setStructuredError] = useState<StructuredErrorState | null>(null);
+    const [countdown, setCountdown] = useState<number>(0);
 
     const cleanSymbol = symbol.toUpperCase().trim();
     const displayName = companyName || cleanSymbol;
+    const inFlightRef = useRef(false);
 
-    const fetchAnalysis = async () => {
+    // Countdown timer effect for quota / rate limit cooldown
+    useEffect(() => {
+        if (countdown <= 0) return;
+        const timer = setInterval(() => {
+            setCountdown((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [countdown]);
+
+    const fetchAnalysis = useCallback(async (isManualRefresh = false) => {
+        if (inFlightRef.current) return;
+        inFlightRef.current = true;
         setLoading(true);
-        setError(null);
+
+        // 1. Check client session cache unless manual refresh requested
+        if (!isManualRefresh) {
+            const cached = analysisClientCache.get(cleanSymbol);
+            if (cached && Date.now() - cached.timestamp < 15 * 60 * 1000) {
+                setAnalysis(cached.data);
+                setError(null);
+                setStructuredError(null);
+                setLoading(false);
+                inFlightRef.current = false;
+                return;
+            }
+        }
 
         try {
             const res = await fetch('/api/ai/analyze', {
@@ -63,6 +106,7 @@ export function StockIntelligencePage({
                 body: JSON.stringify({
                     type: 'detailed_stock_intelligence',
                     symbol: cleanSymbol,
+                    forceRefresh: isManualRefresh,
                     context: {
                         quote,
                         metrics,
@@ -70,44 +114,65 @@ export function StockIntelligencePage({
                 }),
             });
 
-            if (!res.ok) {
-                let errorMsg = `Server responded with ${res.status}`;
-                try {
-                    const raw = await res.text();
-                    const parsed = JSON.parse(raw);
-                    if (parsed?.error) {
-                        errorMsg = typeof parsed.error === 'string' ? parsed.error : JSON.stringify(parsed.error);
-                    }
-                } catch {}
-                throw new Error(errorMsg);
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok || !data?.success) {
+                const errObj = data?.error;
+                const code =
+                    errObj?.code ||
+                    (res.status === 429
+                        ? 'AI_QUOTA_EXCEEDED'
+                        : res.status === 503
+                        ? 'AI_TEMPORARILY_OVERLOADED'
+                        : 'AI_SERVICE_ERROR');
+                const retryAfter = errObj?.retryAfterSeconds || (res.status === 429 ? 300 : 15);
+                const retryable = errObj?.retryable ?? (res.status === 503);
+
+                let friendlyMsg = errObj?.message;
+                if (code === 'AI_QUOTA_EXCEEDED' || res.status === 429) {
+                    friendlyMsg = 'AI usage quota reached. Displaying deterministic market and fundamental models below.';
+                    setCountdown(retryAfter);
+                } else if (code === 'AI_TEMPORARILY_OVERLOADED' || res.status === 503) {
+                    friendlyMsg = 'The AI model is currently experiencing high demand. Please try again in a few moments.';
+                } else if (!friendlyMsg) {
+                    friendlyMsg = 'Live AI synthesis is temporarily unavailable. Presenting deterministic analytical data.';
+                }
+
+                setStructuredError({
+                    code,
+                    message: friendlyMsg,
+                    retryable,
+                    retryAfterSeconds: retryAfter,
+                });
+                setError(friendlyMsg);
+                return;
             }
 
-            const data = await res.json();
-            if (data.success && data.data) {
+            if (data?.data) {
+                analysisClientCache.set(cleanSymbol, { data: data.data, timestamp: Date.now() });
                 setAnalysis(data.data);
                 setError(null);
-            } else {
-                throw new Error(data.error || 'Failed to synthesize stock intelligence');
+                setStructuredError(null);
+                setCountdown(0);
             }
-        } catch (err: any) {
-            console.error('fetchAnalysis error:', err);
-            const msg = err?.message || 'Unable to generate AI analysis';
-            // Extract core message if JSON string
-            let cleanMsg = msg;
-            try {
-                const parsed = JSON.parse(msg);
-                if (parsed?.error) cleanMsg = typeof parsed.error === 'string' ? parsed.error : parsed.error?.message || cleanMsg;
-            } catch {}
-            setError(cleanMsg);
+        } catch {
+            const fallbackMsg = 'Network connection issue while retrieving AI analysis. Displaying standard analytical models.';
+            setError(fallbackMsg);
+            setStructuredError({
+                code: 'AI_NETWORK_ERROR',
+                message: fallbackMsg,
+                retryable: true,
+            });
         } finally {
             setLoading(false);
+            inFlightRef.current = false;
         }
-    };
+    }, [cleanSymbol, quote, metrics]);
 
-    // Auto-fetch on mount
+    // Auto-fetch on symbol change using cache
     useEffect(() => {
-        fetchAnalysis();
-    }, [cleanSymbol]);
+        fetchAnalysis(false);
+    }, [fetchAnalysis]);
 
     // Construct default preview data if API is pending so UI has immediate values
     const fallbackData: DetailedStockIntelligence = {
@@ -212,12 +277,16 @@ export function StockIntelligencePage({
                     </div>
 
                     <button
-                        onClick={fetchAnalysis}
-                        disabled={loading}
+                        onClick={() => fetchAnalysis(true)}
+                        disabled={loading || countdown > 0}
                         className="inline-flex items-center gap-1.5 rounded-xl border border-gray-700 bg-gray-800/80 px-4 py-2 text-xs font-semibold text-gray-200 hover:bg-gray-750 transition disabled:opacity-50"
                     >
                         <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-emerald-400' : ''}`} />
-                        {loading ? 'Synthesizing...' : 'Regenerate Analysis'}
+                        {loading
+                            ? 'Synthesizing...'
+                            : countdown > 0
+                            ? `Available in ${Math.floor(countdown / 60)}m ${countdown % 60}s`
+                            : 'Regenerate Analysis'}
                     </button>
                 </div>
             </div>
@@ -230,15 +299,18 @@ export function StockIntelligencePage({
                         <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
                         <div>
                             <span className="font-semibold text-amber-300">Live AI Synthesis Notice: </span>
-                            <span>{error.length > 140 ? 'AI free tier rate-limit reached. Displaying deterministic market and fundamental models below.' : error}</span>
+                            <span>{error}</span>
                         </div>
                     </div>
-                    <button
-                        onClick={fetchAnalysis}
-                        className="rounded-xl border border-amber-500/30 bg-amber-500/20 px-3.5 py-1.5 font-bold hover:bg-amber-500/30 transition text-amber-200 shrink-0 text-xs shadow"
-                    >
-                        Retry AI
-                    </button>
+                    {structuredError?.retryable !== false && (
+                        <button
+                            onClick={() => fetchAnalysis(true)}
+                            disabled={loading || countdown > 0}
+                            className="rounded-xl border border-amber-500/30 bg-amber-500/20 px-3.5 py-1.5 font-bold hover:bg-amber-500/30 transition text-amber-200 shrink-0 text-xs shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {countdown > 0 ? `Retry in ${Math.floor(countdown / 60)}m ${countdown % 60}s` : 'Retry AI'}
+                        </button>
+                    )}
                 </div>
             )}
 

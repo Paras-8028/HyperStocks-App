@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { CopilotContext, CopilotMessage } from '@/types/ai';
 
 export function useAIAssistant(initialContext?: CopilotContext) {
@@ -19,10 +19,12 @@ export function useAIAssistant(initialContext?: CopilotContext) {
     ]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const isSendingRef = useRef(false);
 
     const sendMessage = useCallback(
         async (content: string, context?: CopilotContext) => {
-            if (!content.trim()) return;
+            if (!content.trim() || loading || isSendingRef.current) return;
+            isSendingRef.current = true;
 
             const userMsg: CopilotMessage = {
                 id: `user-${Date.now()}`,
@@ -36,41 +38,58 @@ export function useAIAssistant(initialContext?: CopilotContext) {
             setLoading(true);
             setError(null);
 
+            const cleanHistory = updatedMessages.filter((m) => !m.id.startsWith('error-'));
+
             try {
                 const res = await fetch('/api/ai/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        messages: updatedMessages,
+                        messages: cleanHistory,
                         context: context || initialContext,
                     }),
                 });
 
-                if (!res.ok) {
-                    const errorText = await res.text().catch(() => '');
-                    throw new Error(errorText || `API error ${res.status}`);
+                const data = await res.json().catch(() => null);
+
+                if (!res.ok || !data?.success) {
+                    const message =
+                        data?.error?.message ||
+                        (typeof data?.error === 'string' ? data.error : null) ||
+                        (res.status === 429
+                            ? 'AI analysis quota reached. Please try again later.'
+                            : res.status === 503
+                            ? 'AI service is temporarily busy. Please try again in a few moments.'
+                            : 'AI Copilot encountered an error');
+                    setError(message);
+                    setMessages((prev) => [
+                        ...prev.filter((m) => !m.id.startsWith('error-')),
+                        {
+                            id: `error-${Date.now()}`,
+                            role: 'assistant',
+                            content: `⚠️ ${message}`,
+                            timestamp: Date.now(),
+                        },
+                    ]);
+                    return;
                 }
 
-                const data = await res.json();
-                if (!data.success) {
-                    throw new Error(data.error || 'Failed to get AI response');
-                }
-
-                setMessages((prev) => [...prev, data.data]);
-            } catch (err: any) {
-                console.error('useAIAssistant error:', err);
-                setError(err?.message || 'Failed to communicate with AI Copilot');
+                setMessages((prev) => [...prev.filter((m) => !m.id.startsWith('error-')), data.data]);
+            } catch {
+                const fallback = 'Failed to communicate with AI Copilot. Please check your network connection.';
+                setError(fallback);
                 setMessages((prev) => [
-                    ...prev,
+                    ...prev.filter((m) => !m.id.startsWith('error-')),
                     {
                         id: `error-${Date.now()}`,
                         role: 'assistant',
-                        content: '⚠️ I encountered an issue analyzing the market data. Please verify your GEMINI_API_KEY or try again shortly.',
+                        content: `⚠️ ${fallback}`,
                         timestamp: Date.now(),
                     },
                 ]);
             } finally {
                 setLoading(false);
+                isSendingRef.current = false;
             }
         },
         [messages, initialContext]
