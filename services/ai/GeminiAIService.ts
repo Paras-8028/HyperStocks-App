@@ -21,12 +21,15 @@ import {
     STOCK_THESIS_PROMPT,
 } from './prompts';
 
+import { GeminiProvider } from './providers/GeminiProvider';
+
 export class GeminiAIService implements IAIIntelligenceService {
     private readonly apiKey: string;
-    private readonly baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+    private readonly provider: GeminiProvider;
 
     constructor(apiKey?: string) {
         this.apiKey = apiKey || process.env.GEMINI_API_KEY || '';
+        this.provider = new GeminiProvider(this.apiKey);
     }
 
     private cleanJson(raw: string): string {
@@ -56,76 +59,27 @@ export class GeminiAIService implements IAIIntelligenceService {
 
     private async callGemini(
         prompt: string,
-        systemInstruction?: string,
-        modelIndex: number = 0
+        systemInstruction?: string
     ): Promise<ApiResult<string>> {
-        if (!this.apiKey) {
-            return {
-                success: false,
-                error: 'GEMINI_API_KEY is not configured in environment',
-                code: 'MISSING_API_KEY',
-            };
-        }
-
-        const candidateModels = Array.from(
-            new Set([
-                AI_CONFIG.defaultModel,
-                AI_CONFIG.fallbackModel,
-                ...(AI_CONFIG.candidateModels || []),
-            ])
-        );
-
-        const model = candidateModels[modelIndex] || AI_CONFIG.defaultModel;
-        const url = `${this.baseUrl}/${model}:generateContent?key=${this.apiKey}`;
-
-        const contents = [
-            {
-                role: 'user',
-                parts: [{ text: prompt }],
-            },
-        ];
-
-        const payload: any = {
-            contents,
-            generationConfig: {
-                temperature: AI_CONFIG.temperature,
-                maxOutputTokens: AI_CONFIG.maxTokens,
-            },
-        };
-
-        if (systemInstruction) {
-            payload.systemInstruction = {
-                parts: [{ text: systemInstruction }],
-            };
-        }
-
-        const res = await ApiClient.post<any, typeof payload>(url, payload, {
-            timeoutMs: AI_CONFIG.timeoutMs,
+        const res = await this.provider.generateResponse({
+            messages: [{ role: 'user', content: prompt }],
+            systemInstruction,
+            temperature: AI_CONFIG.temperature,
+            maxTokens: AI_CONFIG.maxTokens,
         });
 
         if (!res.success) {
-            // Try next candidate model if current model errored
-            if (modelIndex + 1 < candidateModels.length) {
-                console.warn(`[GeminiAIService] Model ${model} failed. Falling back to next candidate model...`);
-                return this.callGemini(prompt, systemInstruction, modelIndex + 1);
-            }
-            return res;
-        }
-
-        const candidate = res.data?.candidates?.[0];
-        const text = candidate?.content?.parts?.[0]?.text;
-
-        if (!text) {
             return {
                 success: false,
-                error: 'Empty response returned by Gemini model',
-                code: 'EMPTY_AI_RESPONSE',
+                error: res.error,
+                code: res.code,
+                structuredError: res.structuredError,
             };
         }
 
         return {
             success: true,
-            data: text,
+            data: res.data.content,
         };
     }
 

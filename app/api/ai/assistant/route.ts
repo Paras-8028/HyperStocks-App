@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { AIProviderFactory } from '@/services/ai/providers/AIProviderFactory';
 import { AIContextBuilder } from '@/services/ai/context/AIContextBuilder';
 import { auth, currentUser } from '@clerk/nextjs/server';
+import { AIStructuredError } from '@/services/ai/aiErrorHandling';
 
 export const runtime = 'nodejs';
 
@@ -18,6 +19,29 @@ async function resolveUserIdentity(): Promise<{ userId?: string; userEmail?: str
     } catch {
         return {};
     }
+}
+
+function formatErrorResponse(err: any, fallbackStatus: number = 500) {
+    const structured: AIStructuredError | undefined =
+        err?.structuredError || (typeof err === 'object' && err?.code && err?.status ? err : undefined);
+    const status = structured?.status || (typeof err?.status === 'number' ? err.status : fallbackStatus);
+    const retryAfter = structured?.retryAfterSeconds;
+
+    return NextResponse.json(
+        {
+            success: false,
+            error: structured || {
+                code: 'AI_SERVICE_ERROR',
+                message: err?.message || 'AI Assistant service encountered an error',
+                status,
+                retryable: false,
+            },
+        },
+        {
+            status: typeof status === 'number' && status >= 400 && status < 600 ? status : 500,
+            headers: retryAfter ? { 'Retry-After': String(retryAfter) } : undefined,
+        }
+    );
 }
 
 export async function POST(req: Request) {
@@ -87,8 +111,19 @@ RESPONSE GUIDELINES:
                     },
                 });
             } catch (streamErr: any) {
+                // If structured error indicates quota exhaustion or auth error, do NOT blindly retry
+                const structured: AIStructuredError | undefined = streamErr?.structuredError;
+                if (
+                    structured &&
+                    (structured.code === 'AI_QUOTA_EXCEEDED' ||
+                        structured.code === 'AI_RATE_LIMITED' ||
+                        structured.code === 'AI_AUTH_ERROR')
+                ) {
+                    return formatErrorResponse(streamErr);
+                }
+
                 console.warn('Streaming failed, falling back to JSON response:', streamErr?.message);
-                // Fallback to non-streaming if stream throws
+                // Fallback to non-streaming only if error is transient stream setup failure
             }
         }
 
@@ -100,7 +135,7 @@ RESPONSE GUIDELINES:
         });
 
         if (!result.success) {
-            return NextResponse.json(result, { status: 500 });
+            return formatErrorResponse(result);
         }
 
         return NextResponse.json({
@@ -122,9 +157,6 @@ RESPONSE GUIDELINES:
         });
     } catch (err: any) {
         console.error('API /api/ai/assistant error:', err);
-        return NextResponse.json(
-            { success: false, error: err?.message || 'AI Assistant service encountered an error' },
-            { status: 500 }
-        );
+        return formatErrorResponse(err);
     }
 }

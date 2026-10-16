@@ -5,7 +5,30 @@ import { getNewsService } from '@/services/news';
 import { AIProviderFactory } from '@/services/ai/providers/AIProviderFactory';
 import { DETAILED_STOCK_INTELLIGENCE_PROMPT } from '@/services/ai/prompts';
 import { auth } from '@clerk/nextjs/server';
-import { getPersonalizationService } from '@/services/personalization';
+import { aiAnalysisCache, AIStructuredError } from '@/services/ai/aiErrorHandling';
+
+function formatErrorResponse(err: any, fallbackStatus: number = 500) {
+    const structured: AIStructuredError | undefined =
+        err?.structuredError || (typeof err === 'object' && err?.code ? err : undefined);
+    const status = structured?.status || (typeof err?.code === 'number' ? err.code : fallbackStatus);
+    const retryAfter = structured?.retryAfterSeconds;
+
+    return NextResponse.json(
+        {
+            success: false,
+            error: structured || {
+                code: 'AI_SERVICE_ERROR',
+                message: err?.message || err?.error || 'AI analysis failed',
+                status,
+                retryable: false,
+            },
+        },
+        {
+            status: typeof status === 'number' && status >= 400 && status < 600 ? status : 500,
+            headers: retryAfter ? { 'Retry-After': String(retryAfter) } : undefined,
+        }
+    );
+}
 
 export async function POST(req: Request) {
     try {
@@ -15,7 +38,16 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { type = 'stock_thesis', symbol, context, positions, watchlistSymbols, userPreferences } = body;
+        const {
+            type = 'stock_thesis',
+            symbol,
+            context,
+            positions,
+            watchlistSymbols,
+            userPreferences,
+            forceRefresh = false,
+        } = body;
+
         const aiService = getAIService();
         const marketService = getMarketService();
 
@@ -29,60 +61,76 @@ export async function POST(req: Request) {
             }
 
             const cleanSymbol = symbol.toUpperCase().trim();
-            const newsService = getNewsService();
+            const cacheKey = `detailed_stock_intelligence:${cleanSymbol}`;
 
-            let quote = context?.quote;
-            let metrics = context?.metrics;
-            let profile = context?.profile;
-
-            if (!quote) {
-                const quoteRes = await marketService.getQuote(cleanSymbol);
-                if (quoteRes.success) quote = quoteRes.data;
-            }
-            if (!metrics) {
-                const metricsRes = await marketService.getFinancialMetrics(cleanSymbol);
-                if (metricsRes.success) metrics = metricsRes.data;
-            }
-            if (!profile) {
-                const profRes = await marketService.getCompanyProfile(cleanSymbol);
-                if (profRes.success) profile = profRes.data;
+            // Check server-side cache unless client explicitly requests forceRefresh
+            if (!forceRefresh) {
+                const cached = aiAnalysisCache.get<any>(cacheKey);
+                if (cached) {
+                    return NextResponse.json({
+                        success: true,
+                        data: cached.data,
+                        cached: true,
+                        cachedAt: cached.cachedAt,
+                    });
+                }
             }
 
-            const newsRes = await newsService.getCompanyNews(cleanSymbol, 7);
-            const newsArticles = newsRes.success ? newsRes.data.slice(0, 4) : [];
+            // Deduplicate concurrent in-flight requests for the exact same symbol
+            const analysisResult = await aiAnalysisCache.deduplicate(cacheKey, async () => {
+                const newsService = getNewsService();
 
-            const quoteStr = quote
-                ? `Price: $${quote.currentPrice}, Change: ${quote.percentChange}%, 52W High: $${metrics?.fiftyTwoWeekHigh ?? 'N/A'}, 52W Low: $${metrics?.fiftyTwoWeekLow ?? 'N/A'}`
-                : 'Quote pending';
+                let quote = context?.quote;
+                let metrics = context?.metrics;
+                let profile = context?.profile;
 
-            const metricsStr = metrics
-                ? `P/E Ratio: ${metrics.peRatio ?? 'N/A'}, P/B: ${metrics.pbRatio ?? 'N/A'}, Beta: ${metrics.beta ?? 'N/A'}, Div Yield: ${metrics.dividendYield ?? 0}%`
-                : 'Metrics pending';
+                if (!quote) {
+                    const quoteRes = await marketService.getQuote(cleanSymbol);
+                    if (quoteRes.success) quote = quoteRes.data;
+                }
+                if (!metrics) {
+                    const metricsRes = await marketService.getFinancialMetrics(cleanSymbol);
+                    if (metricsRes.success) metrics = metricsRes.data;
+                }
+                if (!profile) {
+                    const profRes = await marketService.getCompanyProfile(cleanSymbol);
+                    if (profRes.success) profile = profRes.data;
+                }
 
-            const newsStr = newsArticles.length > 0
-                ? newsArticles.map((a) => `- [${a.source}] ${a.headline}: ${a.summary.slice(0, 140)}...`).join('\n')
-                : 'No recent breaking news';
+                const newsRes = await newsService.getCompanyNews(cleanSymbol, 7);
+                const newsArticles = newsRes.success ? newsRes.data.slice(0, 4) : [];
 
-            const prompt = DETAILED_STOCK_INTELLIGENCE_PROMPT(
-                cleanSymbol,
-                profile?.name || cleanSymbol,
-                quoteStr,
-                metricsStr,
-                newsStr
-            );
+                const quoteStr = quote
+                    ? `Price: $${quote.currentPrice}, Change: ${quote.percentChange}%, 52W High: $${metrics?.fiftyTwoWeekHigh ?? 'N/A'}, 52W Low: $${metrics?.fiftyTwoWeekLow ?? 'N/A'}`
+                    : 'Quote pending';
 
-            const provider = AIProviderFactory.getProvider();
-            const aiRes = await provider.generateResponse({
-                messages: [{ role: 'user', content: prompt }],
-                systemInstruction: 'You are HyperStocks institutional equity research engine. Output valid raw JSON only.',
-                temperature: 0.2,
-            });
+                const metricsStr = metrics
+                    ? `P/E Ratio: ${metrics.peRatio ?? 'N/A'}, P/B: ${metrics.pbRatio ?? 'N/A'}, Beta: ${metrics.beta ?? 'N/A'}, Div Yield: ${metrics.dividendYield ?? 0}%`
+                    : 'Metrics pending';
 
-            if (!aiRes.success) {
-                return NextResponse.json(aiRes, { status: 500 });
-            }
+                const newsStr = newsArticles.length > 0
+                    ? newsArticles.map((a) => `- [${a.source}] ${a.headline}: ${a.summary.slice(0, 140)}...`).join('\n')
+                    : 'No recent breaking news';
 
-            try {
+                const prompt = DETAILED_STOCK_INTELLIGENCE_PROMPT(
+                    cleanSymbol,
+                    profile?.name || cleanSymbol,
+                    quoteStr,
+                    metricsStr,
+                    newsStr
+                );
+
+                const provider = AIProviderFactory.getProvider();
+                const aiRes = await provider.generateResponse({
+                    messages: [{ role: 'user', content: prompt }],
+                    systemInstruction: 'You are HyperStocks institutional equity research engine. Output valid raw JSON only.',
+                    temperature: 0.2,
+                });
+
+                if (!aiRes.success) {
+                    throw aiRes;
+                }
+
                 let text = aiRes.data.content.trim();
                 const firstBrace = text.indexOf('{');
                 const lastBrace = text.lastIndexOf('}');
@@ -92,14 +140,19 @@ export async function POST(req: Request) {
                     if (text.startsWith('```json')) text = text.replace(/^```json\s*/i, '').replace(/```\s*$/, '');
                     else if (text.startsWith('```')) text = text.replace(/^```\s*/, '').replace(/```\s*$/, '');
                 }
+
                 const parsed = JSON.parse(text.trim());
-                return NextResponse.json({ success: true, data: parsed });
-            } catch (err: any) {
-                return NextResponse.json({
-                    success: false,
-                    error: `Failed to parse stock intelligence: ${err?.message}`,
-                }, { status: 500 });
+                aiAnalysisCache.set(cacheKey, parsed);
+                return parsed;
+            }).catch((err) => {
+                return { __error: err };
+            });
+
+            if ('__error' in analysisResult) {
+                return formatErrorResponse(analysisResult.__error);
             }
+
+            return NextResponse.json({ success: true, data: analysisResult });
         }
 
         // 1. Stock Thesis
@@ -111,34 +164,63 @@ export async function POST(req: Request) {
                 );
             }
 
-            // Fetch live quote and metrics if not supplied
-            let quote = context?.quote;
-            let metrics = context?.metrics;
-            let profile = context?.profile;
+            const cleanSymbol = symbol.toUpperCase().trim();
+            const cacheKey = `stock_thesis:${cleanSymbol}`;
 
-            if (!quote) {
-                const quoteRes = await marketService.getQuote(symbol);
-                if (quoteRes.success) quote = quoteRes.data;
+            if (!forceRefresh) {
+                const cached = aiAnalysisCache.get<any>(cacheKey);
+                if (cached) {
+                    return NextResponse.json({
+                        success: true,
+                        data: cached.data,
+                        cached: true,
+                        cachedAt: cached.cachedAt,
+                    });
+                }
             }
 
-            if (!metrics) {
-                const metricsRes = await marketService.getFinancialMetrics(symbol);
-                if (metricsRes.success) metrics = metricsRes.data;
-            }
+            const thesisResult = await aiAnalysisCache.deduplicate(cacheKey, async () => {
+                let quote = context?.quote;
+                let metrics = context?.metrics;
+                let profile = context?.profile;
 
-            if (!profile) {
-                const profRes = await marketService.getCompanyProfile(symbol);
-                if (profRes.success) profile = profRes.data;
-            }
+                if (!quote) {
+                    const quoteRes = await marketService.getQuote(cleanSymbol);
+                    if (quoteRes.success) quote = quoteRes.data;
+                }
 
-            const thesisResult = await aiService.generateStockThesis(symbol, {
-                currentSymbol: symbol,
-                quote,
-                metrics,
-                profile,
+                if (!metrics) {
+                    const metricsRes = await marketService.getFinancialMetrics(cleanSymbol);
+                    if (metricsRes.success) metrics = metricsRes.data;
+                }
+
+                if (!profile) {
+                    const profRes = await marketService.getCompanyProfile(cleanSymbol);
+                    if (profRes.success) profile = profRes.data;
+                }
+
+                const res = await aiService.generateStockThesis(cleanSymbol, {
+                    currentSymbol: cleanSymbol,
+                    quote,
+                    metrics,
+                    profile,
+                });
+
+                if (!res.success) {
+                    throw res;
+                }
+
+                aiAnalysisCache.set(cacheKey, res.data);
+                return res.data;
+            }).catch((err) => {
+                return { __error: err };
             });
 
-            return NextResponse.json(thesisResult);
+            if ('__error' in thesisResult) {
+                return formatErrorResponse(thesisResult.__error);
+            }
+
+            return NextResponse.json({ success: true, data: thesisResult });
         }
 
         // 2. Portfolio Risk Audit
@@ -147,16 +229,50 @@ export async function POST(req: Request) {
                 positions || [],
                 userPreferences
             );
+
+            if (!auditResult.success) {
+                return formatErrorResponse(auditResult);
+            }
+
             return NextResponse.json(auditResult);
         }
 
         // 3. Personalized Market Briefing
         if (type === 'market_briefing') {
-            const briefingResult = await aiService.generateMarketBriefing(
-                watchlistSymbols || [],
-                userPreferences
-            );
-            return NextResponse.json(briefingResult);
+            const symbolsList = (watchlistSymbols || []).slice().sort().join(',');
+            const cacheKey = `market_briefing:${userId}:${symbolsList}`;
+
+            if (!forceRefresh) {
+                const cached = aiAnalysisCache.get<any>(cacheKey);
+                if (cached) {
+                    return NextResponse.json({
+                        success: true,
+                        data: cached.data,
+                        cached: true,
+                        cachedAt: cached.cachedAt,
+                    });
+                }
+            }
+
+            const briefingResult = await aiAnalysisCache.deduplicate(cacheKey, async () => {
+                const res = await aiService.generateMarketBriefing(
+                    watchlistSymbols || [],
+                    userPreferences
+                );
+                if (!res.success) {
+                    throw res;
+                }
+                aiAnalysisCache.set(cacheKey, res.data);
+                return res.data;
+            }).catch((err) => {
+                return { __error: err };
+            });
+
+            if ('__error' in briefingResult) {
+                return formatErrorResponse(briefingResult.__error);
+            }
+
+            return NextResponse.json({ success: true, data: briefingResult });
         }
 
         return NextResponse.json(
@@ -165,9 +281,6 @@ export async function POST(req: Request) {
         );
     } catch (err: any) {
         console.error('API /api/ai/analyze error:', err);
-        return NextResponse.json(
-            { success: false, error: err?.message || 'AI analysis failed' },
-            { status: 500 }
-        );
+        return formatErrorResponse(err);
     }
 }

@@ -8,6 +8,7 @@ export type ApiFailure<E = string> = {
     success: false;
     error: E;
     code?: string | number;
+    structuredError?: any;
 };
 
 export type ApiResult<T, E = string> = ApiSuccess<T> | ApiFailure<E>;

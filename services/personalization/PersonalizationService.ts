@@ -74,20 +74,31 @@ export class PersonalizationService implements IPersonalizationService {
             }
 
             const prefs: UserPreferences = {
-                userId: doc.userId,
-                email: doc.email || '',
-                name: doc.name || 'Investor',
-                country: doc.country || 'US',
+                userId: String(doc.userId),
+                email: String(doc.email || ''),
+                name: String(doc.name || 'Investor'),
+                country: String(doc.country || 'US'),
                 experienceLevel: doc.experienceLevel || DEFAULT_USER_PREFERENCES.experienceLevel,
-                investmentGoals: doc.investmentGoals || DEFAULT_USER_PREFERENCES.investmentGoals,
+                investmentGoals: Array.isArray(doc.investmentGoals)
+                    ? [...doc.investmentGoals]
+                    : [DEFAULT_USER_PREFERENCES.investmentGoals[0]],
                 riskTolerance: doc.riskTolerance || DEFAULT_USER_PREFERENCES.riskTolerance,
-                preferredSectors: doc.preferredSectors || DEFAULT_USER_PREFERENCES.preferredSectors,
-                preferredRegions: doc.preferredRegions || DEFAULT_USER_PREFERENCES.preferredRegions,
+                preferredSectors: Array.isArray(doc.preferredSectors)
+                    ? [...doc.preferredSectors]
+                    : [...DEFAULT_USER_PREFERENCES.preferredSectors],
+                preferredRegions: Array.isArray(doc.preferredRegions)
+                    ? [...doc.preferredRegions]
+                    : [...DEFAULT_USER_PREFERENCES.preferredRegions],
                 investmentHorizon: doc.investmentHorizon || DEFAULT_USER_PREFERENCES.investmentHorizon,
                 preferredAnalysisStyle: doc.preferredAnalysisStyle || DEFAULT_USER_PREFERENCES.preferredAnalysisStyle,
-                favoriteStocks: doc.favoriteStocks || DEFAULT_USER_PREFERENCES.favoriteStocks,
+                favoriteStocks: Array.isArray(doc.favoriteStocks)
+                    ? [...doc.favoriteStocks]
+                    : [],
                 preferredIndustry: doc.preferredIndustry || DEFAULT_USER_PREFERENCES.preferredIndustry,
-                notificationPreferences: doc.notificationPreferences || DEFAULT_USER_PREFERENCES.notificationPreferences,
+                notificationPreferences: {
+                    ...(DEFAULT_USER_PREFERENCES.notificationPreferences || {}),
+                    ...(doc.notificationPreferences || {}),
+                },
                 aiPersonaPreference: doc.aiPersonaPreference || DEFAULT_USER_PREFERENCES.aiPersonaPreference,
                 onboardingCompleted: doc.onboardingCompleted ?? Boolean(doc.experienceLevel || doc.riskTolerance),
                 lastUpdated: doc.updatedAt ? new Date(doc.updatedAt).toISOString() : undefined,

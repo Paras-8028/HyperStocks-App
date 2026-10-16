@@ -94,6 +94,7 @@ export async function getUserWatchlist(emailOrUserId?: string) {
 
         return items.map((item) => ({
             id: String(item._id),
+            _id: String(item._id),
             symbol: item.symbol,
             company: item.company,
             addedAt: item.addedAt ? new Date(item.addedAt).toISOString() : null,
