@@ -120,10 +120,12 @@ In your `.env` file, configure your SMTP server credentials:
 # Standard SMTP Configuration
 SMTP_HOST="smtp.gmail.com"
 SMTP_PORT="465"
-SMTP_USER="your-email@gmail.com"
+SMTP_USER="agent8028agent@gmail.com"
 SMTP_PASSWORD="your-app-password"
-SMTP_FROM_EMAIL="alerts@hyperstocks.app"
-SMTP_FROM_NAME="HyperStocks Intelligence"
+SMTP_FROM_EMAIL="agent8028agent@gmail.com"
+SMTP_FROM_NAME="HyperStocks News"
+NODEMAILER_EMAIL="agent8028agent@gmail.com"
+NODEMAILER_PASSWORD="your-app-password"
 
 # Cron Security Token
 CRON_SECRET="your_secure_cron_secret_token"

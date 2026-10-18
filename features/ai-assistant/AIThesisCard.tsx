@@ -11,11 +11,11 @@ export interface AIThesisCardProps {
 
 export function AIThesisCard({ thesis, className = '' }: AIThesisCardProps) {
     const verdictColors: Record<StockThesis['verdict'], { bg: string; text: string; border: string }> = {
-        strong_buy: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-        buy: { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/30' },
-        hold: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
-        underweight: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30' },
-        sell: { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/30' },
+        strong_buy: { bg: 'bg-[#3DFFA0]/15', text: 'text-[#3DFFA0]', border: 'border-[#3DFFA0]/30' },
+        buy: { bg: 'bg-[#3DFFA0]/10', text: 'text-[#3DFFA0]', border: 'border-[#3DFFA0]/20' },
+        hold: { bg: 'bg-amber-400/10', text: 'text-amber-300', border: 'border-amber-400/20' },
+        underweight: { bg: 'bg-orange-400/10', text: 'text-orange-300', border: 'border-orange-400/20' },
+        sell: { bg: 'bg-[#FF5470]/10', text: 'text-[#FF5470]', border: 'border-[#FF5470]/30' },
     };
 
     const verdictFormat: Record<StockThesis['verdict'], string> = {
@@ -30,22 +30,22 @@ export function AIThesisCard({ thesis, className = '' }: AIThesisCardProps) {
 
     return (
         <div
-            className={`rounded-2xl border border-gray-800 bg-gray-900/80 p-6 backdrop-blur shadow-xl space-y-6 ${className}`}
+            className={`orbital-card p-6 space-y-6 ${className}`}
         >
             {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-800 pb-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[rgba(148,163,184,0.12)] pb-4">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7C5CFF]/15 text-[#35D6FF] border border-[#7C5CFF]/30">
                         <Sparkles className="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-[#F4F7FF] flex items-center gap-2">
                             AI Investment Thesis
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 font-normal">
-                                Gemini Flash
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#111B2E] text-[#35D6FF] border border-[rgba(148,163,184,0.15)] font-mono">
+                                Gemini 2.5
                             </span>
                         </h3>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-[#94A3B8]">
                             Automated quantitative & qualitative equity synthesis
                         </p>
                     </div>
@@ -53,8 +53,8 @@ export function AIThesisCard({ thesis, className = '' }: AIThesisCardProps) {
 
                 <div className="flex items-center gap-3">
                     <div className="text-right">
-                        <div className="text-xs text-gray-400">AI Confidence</div>
-                        <div className="text-sm font-semibold text-gray-200">
+                        <div className="text-xs text-[#94A3B8]">AI Confidence</div>
+                        <div className="text-sm font-semibold font-mono text-[#F4F7FF]">
                             {thesis.confidenceScore}%
                         </div>
                     </div>

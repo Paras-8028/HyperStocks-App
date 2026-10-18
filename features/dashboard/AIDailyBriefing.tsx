@@ -113,66 +113,66 @@ export function AIDailyBriefing({
 
     return (
         <div
-            className={`relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-gray-900 via-gray-900/95 to-emerald-950/20 p-6 md:p-8 backdrop-blur shadow-2xl space-y-6 ${className}`}
+            className={`relative overflow-hidden rounded-3xl border border-[#7C5CFF]/30 bg-gradient-to-br from-[#0D1424] via-[#080D1B] to-[#0D1424] p-6 md:p-8 backdrop-blur-2xl shadow-2xl space-y-6 ${className}`}
         >
             {/* Ambient background glow */}
-            <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
-            <div className="pointer-events-none absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-blue-500/5 blur-3xl" />
+            <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#7C5CFF]/15 blur-3xl" />
+            <div className="pointer-events-none absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-[#35D6FF]/10 blur-3xl" />
 
             {/* Header row */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-800/80 pb-5">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[rgba(148,163,184,0.14)] pb-5">
                 <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-400">
-                        <Sparkles className="h-4 w-4 text-emerald-400 animate-pulse" />
-                        AI Financial Operating System
-                        <span className="text-gray-600">•</span>
-                        <span className="text-gray-400 font-normal">{briefing.dateFormatted}</span>
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#35D6FF]">
+                        <Sparkles className="h-4 w-4 text-[#7C5CFF] animate-pulse" />
+                        HyperStocks Intelligence Briefing
+                        <span className="text-[#94A3B8]/40">•</span>
+                        <span className="text-[#94A3B8] font-normal">{briefing.dateFormatted}</span>
                     </div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-100 tracking-tight">
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-[#F4F7FF] tracking-tight">
                         {briefing.greeting}
-                    </h1>
+                    </h2>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2.5">
                     <button
                         onClick={openOnboarding}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-950/30 px-3.5 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-900/40 hover:text-emerald-200 transition"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-[rgba(148,163,184,0.18)] bg-[#111B2E] px-3.5 py-2 text-xs font-semibold text-[#F4F7FF] hover:border-[#7C5CFF]/50 transition"
                     >
-                        <SlidersHorizontal className="h-3.5 w-3.5" />
+                        <SlidersHorizontal className="h-3.5 w-3.5 text-[#35D6FF]" />
                         Personalize Engine
                     </button>
 
                     <button
                         onClick={handleRefresh}
                         disabled={refreshing}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-gray-700/80 bg-gray-800/60 px-3.5 py-2 text-xs font-medium text-gray-300 hover:bg-gray-750 hover:text-white transition disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#7C5CFF] to-[#35D6FF] px-4 py-2 text-xs font-bold text-[#050816] hover:brightness-110 transition disabled:opacity-50 shadow-md shadow-[#7C5CFF]/20"
                     >
-                        <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin text-emerald-400' : ''}`} />
-                        {refreshing ? 'Regenerating...' : 'Refresh AI Intelligence'}
+                        <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin text-[#050816]' : ''}`} />
+                        {refreshing ? 'Synthesizing...' : 'Refresh AI Intelligence'}
                     </button>
                 </div>
             </div>
 
             {/* Core Executive Summary */}
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/15 p-5 backdrop-blur space-y-3">
-                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 uppercase tracking-wider">
-                    <Compass className="h-4 w-4" />
-                    Market Pulse & Watchlist Impact
+            <div className="rounded-2xl border border-[#35D6FF]/25 bg-[#111B2E]/60 p-5 backdrop-blur space-y-3 shadow-lg">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#35D6FF] uppercase tracking-wider">
+                    <Compass className="h-4 w-4 text-[#35D6FF]" />
+                    Market Pulse & Constellation Impact
                 </div>
-                <p className="text-sm md:text-base text-gray-200 leading-relaxed font-normal">
+                <p className="text-sm md:text-base text-[#F4F7FF] leading-relaxed font-normal">
                     {briefing.marketSummary}
                 </p>
 
-                <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-gray-800/80 text-xs">
+                <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-[rgba(148,163,184,0.12)] text-xs">
                     <div className="flex items-center gap-2">
-                        <span className="text-gray-400">Watchlist Estimated Move:</span>
-                        <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                        <span className="text-[#94A3B8]">Watchlist Estimated Move:</span>
+                        <span className="font-bold text-[#3DFFA0] bg-[#3DFFA0]/15 px-2.5 py-0.5 rounded-full border border-[#3DFFA0]/30 font-mono">
                             +{briefing.watchlistImpact.changePercent}% Today
                         </span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-gray-400">
+                    <div className="flex items-center gap-1.5 text-[#94A3B8]">
                         <span>Leading Driver:</span>
-                        <span className="font-semibold text-gray-200">{briefing.watchlistImpact.driver}</span>
+                        <span className="font-semibold text-[#F4F7FF]">{briefing.watchlistImpact.driver}</span>
                     </div>
                 </div>
             </div>
@@ -180,7 +180,7 @@ export function AIDailyBriefing({
             {/* 4-Pillar Tactical Grid: Attention, Events, Opportunities, Risks */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* 1. Stocks Requiring Attention */}
-                <div className="rounded-2xl border border-gray-800/80 bg-gray-850/40 p-4 space-y-3 flex flex-col justify-between backdrop-blur">
+                <div className="rounded-2xl border border-[rgba(148,163,184,0.14)] bg-[#0D1424]/80 p-4 space-y-3 flex flex-col justify-between backdrop-blur">
                     <div className="space-y-2">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400 uppercase tracking-wider">
                             <Flame className="h-4 w-4" />
@@ -191,23 +191,23 @@ export function AIDailyBriefing({
                                 <Link
                                     key={idx}
                                     href={`/stocks/${item.symbol}`}
-                                    className="group block rounded-xl bg-gray-800/60 p-2.5 border border-gray-750 hover:border-emerald-500/40 transition"
+                                    className="group block rounded-xl bg-[#111B2E]/70 p-2.5 border border-[rgba(148,163,184,0.1)] hover:border-[#7C5CFF]/50 transition"
                                 >
                                     <div className="flex items-center justify-between mb-1">
-                                        <span className="font-bold text-gray-100 group-hover:text-emerald-400 transition">
-                                            {item.symbol}
+                                        <span className="font-bold text-[#F4F7FF] group-hover:text-[#35D6FF] transition">
+                                            ${item.symbol}
                                         </span>
                                         <span
                                             className={`text-[10px] font-bold px-1.5 py-0.2 rounded uppercase ${
                                                 item.priority === 'high'
-                                                    ? 'bg-rose-500/20 text-rose-400'
+                                                    ? 'bg-[#FF5470]/20 text-[#FF5470]'
                                                     : 'bg-amber-500/20 text-amber-400'
                                             }`}
                                         >
                                             {item.priority}
                                         </span>
                                     </div>
-                                    <p className="text-[11px] text-gray-400 leading-snug line-clamp-2">
+                                    <p className="text-[11px] text-[#94A3B8] leading-snug line-clamp-2">
                                         {item.reason}
                                     </p>
                                 </Link>
@@ -217,48 +217,48 @@ export function AIDailyBriefing({
                 </div>
 
                 {/* 2. Key Events Today */}
-                <div className="rounded-2xl border border-gray-800/80 bg-gray-850/40 p-4 space-y-2.5 backdrop-blur">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-blue-400 uppercase tracking-wider">
+                <div className="rounded-2xl border border-[rgba(148,163,184,0.14)] bg-[#0D1424]/80 p-4 space-y-2.5 backdrop-blur">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-[#35D6FF] uppercase tracking-wider">
                         <Calendar className="h-4 w-4" />
                         Catalysts & Events
                     </div>
-                    <ul className="space-y-2 text-xs text-gray-300">
+                    <ul className="space-y-2 text-xs text-[#CBD5E1]">
                         {briefing.importantEvents.map((evt, idx) => (
                             <li key={idx} className="flex items-start gap-2">
-                                <span className="text-blue-400 font-bold shrink-0 mt-0.5">•</span>
-                                <span className="text-[11px] leading-snug text-gray-300">{evt}</span>
+                                <span className="text-[#35D6FF] font-bold shrink-0 mt-0.5">•</span>
+                                <span className="text-[11px] leading-snug text-[#CBD5E1]">{evt}</span>
                             </li>
                         ))}
                     </ul>
                 </div>
 
                 {/* 3. High-Conviction Opportunities */}
-                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/10 p-4 space-y-2.5 backdrop-blur">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                <div className="rounded-2xl border border-[#3DFFA0]/25 bg-[#0D1424]/80 p-4 space-y-2.5 backdrop-blur">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-[#3DFFA0] uppercase tracking-wider">
                         <Zap className="h-4 w-4" />
-                        Identified Opportunities
+                        Opportunities
                     </div>
-                    <ul className="space-y-2 text-xs text-gray-300">
+                    <ul className="space-y-2 text-xs text-[#CBD5E1]">
                         {briefing.keyOpportunities.map((opp, idx) => (
                             <li key={idx} className="flex items-start gap-2">
-                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                                <span className="text-[11px] leading-snug text-gray-300">{opp}</span>
+                                <CheckCircle2 className="h-3.5 w-3.5 text-[#3DFFA0] shrink-0 mt-0.5" />
+                                <span className="text-[11px] leading-snug text-[#CBD5E1]">{opp}</span>
                             </li>
                         ))}
                     </ul>
                 </div>
 
                 {/* 4. Active Risks & Volatility */}
-                <div className="rounded-2xl border border-rose-500/20 bg-rose-950/10 p-4 space-y-2.5 backdrop-blur">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-rose-400 uppercase tracking-wider">
+                <div className="rounded-2xl border border-[#FF5470]/25 bg-[#0D1424]/80 p-4 space-y-2.5 backdrop-blur">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-[#FF5470] uppercase tracking-wider">
                         <ShieldAlert className="h-4 w-4" />
                         Risk & Volatility Radar
                     </div>
-                    <ul className="space-y-2 text-xs text-gray-300">
+                    <ul className="space-y-2 text-xs text-[#CBD5E1]">
                         {briefing.keyRisks.map((risk, idx) => (
                             <li key={idx} className="flex items-start gap-2">
-                                <AlertCircle className="h-3.5 w-3.5 text-rose-400 shrink-0 mt-0.5" />
-                                <span className="text-[11px] leading-snug text-gray-300">{risk}</span>
+                                <AlertCircle className="h-3.5 w-3.5 text-[#FF5470] shrink-0 mt-0.5" />
+                                <span className="text-[11px] leading-snug text-[#CBD5E1]">{risk}</span>
                             </li>
                         ))}
                     </ul>

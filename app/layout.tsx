@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
+import { LivingSpaceBackground } from "@/components/orbital/LivingSpaceBackground";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "HyperStocks | AI Financial Intelligence Platform",
-    description: "Personalized AI-powered stock intelligence, real-time market analysis, and predictive portfolio insights.",
+    title: "HyperStocks | AI-Powered Stock Intelligence",
+    description: "Next-generation financial intelligence platform powered by real-time market telemetry and Gemini AI.",
 };
 
 export default function RootLayout({
@@ -30,30 +31,38 @@ export default function RootLayout({
             appearance={{
                 theme: dark,
                 variables: {
-                    colorPrimary: '#10b981',
-                    colorBackground: '#0b0f17',
-                    colorForeground: '#f3f4f6',
-                    colorMutedForeground: '#9ca3af',
-                    colorNeutral: '#1f2937',
+                    colorPrimary: '#7C5CFF',
+                    colorBackground: '#050816',
+                    colorForeground: '#F4F7FF',
+                    colorMutedForeground: '#94A3B8',
+                    colorNeutral: '#0D1424',
                     borderRadius: '0.75rem',
                 },
                 elements: {
-                    card: 'border border-gray-800 bg-gray-950/95 shadow-2xl backdrop-blur-xl',
-                    formButtonPrimary: 'bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-semibold shadow-lg shadow-emerald-500/20 transition-all',
-                    footerActionLink: 'text-emerald-400 hover:text-emerald-300 font-medium',
-                    headerTitle: 'text-gray-100 font-bold tracking-tight',
-                    headerSubtitle: 'text-gray-400 text-sm',
-                    socialButtonsBlockButton: 'border border-gray-800 bg-gray-900/90 hover:bg-gray-800 text-gray-200 transition-colors',
-                    formFieldInput: 'border-gray-800 bg-gray-900/80 text-gray-100 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500',
-                    dividerLine: 'bg-gray-800',
-                    dividerText: 'text-gray-500 text-xs uppercase tracking-wider',
+                    card: 'border border-[rgba(148,163,184,0.14)] bg-[#0D1424]/95 shadow-2xl backdrop-blur-xl',
+                    formButtonPrimary: 'bg-gradient-to-r from-[#7C5CFF] to-[#35D6FF] hover:opacity-95 text-[#050816] font-bold shadow-lg shadow-[#7C5CFF]/25 transition-all',
+                    footerActionLink: 'text-[#35D6FF] hover:text-[#7C5CFF] font-medium',
+                    headerTitle: 'text-[#F4F7FF] font-bold tracking-tight',
+                    headerSubtitle: 'text-[#94A3B8] text-sm',
+                    socialButtonsBlockButton: 'border border-[rgba(148,163,184,0.14)] bg-[#111B2E]/90 hover:bg-[#17243B] text-[#F4F7FF] transition-colors',
+                    formFieldInput: 'border-[rgba(148,163,184,0.18)] bg-[#080D1B]/90 text-[#F4F7FF] focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF]',
+                    dividerLine: 'bg-[rgba(148,163,184,0.14)]',
+                    dividerText: 'text-[#94A3B8] text-xs uppercase tracking-wider',
                 },
             }}
         >
             <html lang="en" className="dark">
-                <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                    {children}
-                    <Toaster />
+                <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#050816] text-[#F4F7FF] min-h-screen relative selection:bg-[#7C5CFF]/30 selection:text-[#35D6FF]`}>
+                    <LivingSpaceBackground />
+                    <div className="relative z-10 flex min-h-screen flex-col">
+                        {children}
+                    </div>
+                    <Toaster
+                        theme="dark"
+                        toastOptions={{
+                            className: 'border border-[rgba(148,163,184,0.16)] bg-[#0D1424] text-[#F4F7FF] shadow-2xl backdrop-blur-xl',
+                        }}
+                    />
                 </body>
             </html>
         </ClerkProvider>

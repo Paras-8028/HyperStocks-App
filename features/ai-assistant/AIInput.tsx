@@ -30,7 +30,7 @@ export function AIInput({
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 96)}px`;
         }
     }, [value]);
 
@@ -44,7 +44,7 @@ export function AIInput({
     };
 
     return (
-        <div className={`relative rounded-2xl border border-gray-800 bg-gray-900/90 backdrop-blur p-2.5 shadow-xl transition-all focus-within:border-emerald-500/50 ${className}`}>
+        <div className={`relative rounded-2xl border border-[rgba(148,163,184,0.16)] bg-[#080D1B]/95 backdrop-blur p-2 sm:p-2.5 shadow-xl transition-all focus-within:border-[#7C5CFF]/60 ${className}`}>
             <textarea
                 ref={textareaRef}
                 value={value}
@@ -53,17 +53,17 @@ export function AIInput({
                 placeholder={placeholder}
                 disabled={disabled}
                 rows={1}
-                className="w-full resize-none bg-transparent px-3 py-1.5 text-xs text-gray-100 placeholder-gray-500 focus:outline-none max-h-32 disabled:opacity-50 leading-relaxed"
+                className="w-full resize-none bg-transparent px-2.5 py-1 text-xs text-[#F4F7FF] placeholder-[#94A3B8]/60 focus:outline-none max-h-24 disabled:opacity-50 leading-relaxed"
             />
 
-            <div className="flex items-center justify-between pt-2 px-2 border-t border-gray-800/60 text-[11px] text-gray-500">
-                <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between pt-1.5 px-1 border-t border-[rgba(148,163,184,0.1)] text-[11px] text-[#94A3B8]">
+                <div className="hidden sm:flex items-center gap-2 text-[10px]">
                     <span className="flex items-center gap-1">
-                        <kbd className="rounded bg-gray-800 px-1.5 py-0.5 font-mono text-[10px] text-gray-400">Enter</kbd> to send
+                        <kbd className="rounded bg-[#111B2E] px-1 py-0.5 font-mono text-[9px] text-[#CBD5E1]">Enter</kbd> to send
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
-                        <kbd className="rounded bg-gray-800 px-1.5 py-0.5 font-mono text-[10px] text-gray-400">Shift+Enter</kbd> newline
+                        <kbd className="rounded bg-[#111B2E] px-1 py-0.5 font-mono text-[9px] text-[#CBD5E1]">Shift+Enter</kbd> newline
                     </span>
                 </div>
 
@@ -72,10 +72,10 @@ export function AIInput({
                         <button
                             type="button"
                             onClick={onStop}
-                            className="flex items-center gap-1 rounded-xl bg-gray-800 px-3 py-1.5 text-xs font-semibold text-rose-400 hover:bg-gray-750 transition"
+                            className="flex items-center gap-1 rounded-xl bg-[#111B2E] px-3 py-1.5 text-xs font-semibold text-[#FF5470] hover:bg-[#17243B] transition"
                             title="Stop generating"
                         >
-                            <Square className="h-3 w-3 fill-rose-400" />
+                            <Square className="h-3 w-3 fill-[#FF5470]" />
                             Stop
                         </button>
                     ) : (
@@ -83,7 +83,7 @@ export function AIInput({
                             type="button"
                             onClick={onSubmit}
                             disabled={!value.trim() || disabled}
-                            className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-500 text-gray-950 transition hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-emerald-500/20"
+                            className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-r from-[#7C5CFF] to-[#35D6FF] text-[#050816] transition hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-[#7C5CFF]/25 font-bold"
                             title="Send message"
                         >
                             <ArrowUp className="h-4 w-4 stroke-[2.5]" />

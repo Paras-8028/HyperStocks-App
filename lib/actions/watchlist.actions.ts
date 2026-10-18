@@ -64,6 +64,38 @@ export async function getWatchlistSymbolsByEmail(emailOrUserId: string): Promise
     }
 }
 
+/** Returns symbol and company name for email news filtering */
+export async function getWatchlistStockItemsByEmail(
+    emailOrUserId: string
+): Promise<Array<{ symbol: string; company: string }>> {
+    if (!emailOrUserId) return [];
+
+    try {
+        await connectToDatabase();
+        let userId = emailOrUserId;
+
+        if (emailOrUserId.includes('@')) {
+            const mongoose = await connectToDatabase();
+            const db = mongoose.connection.db;
+            if (db) {
+                const user = await db.collection('user').findOne({ email: emailOrUserId });
+                if (user) {
+                    userId = user.id || String(user._id);
+                }
+            }
+        }
+
+        const items = await Watchlist.find({ userId }, { symbol: 1, company: 1 }).lean();
+        return items.map((i) => ({
+            symbol: String(i.symbol),
+            company: String(i.company || i.symbol),
+        }));
+    } catch (err) {
+        console.error('getWatchlistStockItemsByEmail error:', err);
+        return [];
+    }
+}
+
 /** Used by /watchlist page */
 export async function getUserWatchlist(emailOrUserId?: string) {
     try {

@@ -17,35 +17,40 @@ export type WatchlistItem = {
 };
 
 export default function WatchlistTabs({
-                                          items,
-                                      }: {
+    items,
+    initialQuotes = {},
+}: {
     items: WatchlistItem[];
+    initialQuotes?: Record<string, any>;
 }) {
     const [active, setActive] = useState<Tab>("Watchlist");
 
     return (
         <>
             {/* Tabs Header */}
-            <div className="flex gap-6 border-b border-gray-700 mb-6">
+            <div className="flex gap-4 border-b border-[rgba(148,163,184,0.14)] mb-6">
                 {TABS.map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActive(tab)}
                         className={cn(
-                            "pb-3 text-sm font-medium transition-colors",
+                            "pb-3 text-xs font-bold uppercase tracking-wider transition-all relative",
                             active === tab
-                                ? "text-green-500 border-b-2 border-green-500"
-                                : "text-gray-400 hover:text-gray-200"
+                                ? "text-[#35D6FF]"
+                                : "text-[#94A3B8] hover:text-[#F4F7FF]"
                         )}
                     >
                         {tab}
+                        {active === tab && (
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-gradient-to-r from-[#7C5CFF] to-[#35D6FF] shadow-[0_0_8px_#35D6FF]" />
+                        )}
                     </button>
                 ))}
             </div>
 
             {/* Tabs Content */}
             {active === "Watchlist" && (
-                <WatchlistTable items={items} />
+                <WatchlistTable items={items} initialQuotes={initialQuotes} />
             )}
 
             {active === "News" && (

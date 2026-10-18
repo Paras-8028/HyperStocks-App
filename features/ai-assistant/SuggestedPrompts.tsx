@@ -89,22 +89,22 @@ export function SuggestedPrompts({
           ];
 
     return (
-        <div className={`space-y-2.5 ${className}`}>
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+        <div className={`space-y-2 ${className}`}>
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#94A3B8]">
+                <Sparkles className="h-3 w-3 text-[#35D6FF]" />
                 Suggested Intelligence Queries
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
                 {contextualPrompts.map((item, index) => {
                     const Icon = item.icon;
                     return (
                         <button
                             key={index}
                             onClick={() => onSelectPrompt(item.label)}
-                            className="group flex items-center gap-2 rounded-xl border border-gray-800 bg-gray-900/80 px-3 py-2 text-left text-xs text-gray-300 backdrop-blur transition hover:border-emerald-500/40 hover:bg-gray-850 hover:text-white shadow-sm"
+                            className="group flex items-center gap-1.5 rounded-xl border border-[rgba(148,163,184,0.15)] bg-[#111B2E]/70 px-2.5 py-1.5 text-left text-[11px] text-[#CBD5E1] backdrop-blur transition hover:border-[#7C5CFF]/50 hover:bg-[#111B2E] hover:text-[#F4F7FF] shadow-sm"
                         >
-                            <Icon className="h-3.5 w-3.5 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
+                            <Icon className="h-3 w-3 text-[#35D6FF] group-hover:scale-110 transition-transform shrink-0" />
                             <span>{item.label}</span>
                         </button>
                     );

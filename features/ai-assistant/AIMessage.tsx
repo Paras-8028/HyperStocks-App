@@ -153,49 +153,49 @@ export function AIMessage({
 
     return (
         <div
-            className={`flex gap-3 text-xs leading-relaxed ${
+            className={`flex gap-2 sm:gap-2.5 text-xs leading-relaxed ${
                 isUser ? 'justify-end' : 'justify-start'
             }`}
         >
             {!isUser && (
                 <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl shadow-sm mt-0.5 ${
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl shadow-sm mt-0.5 ${
                         isError
                             ? 'bg-amber-500/15 border border-amber-500/30 text-amber-400'
-                            : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'
+                            : 'bg-gradient-to-br from-[#7C5CFF]/20 to-[#35D6FF]/20 border border-[#7C5CFF]/40 text-[#35D6FF]'
                     }`}
                 >
-                    {isError ? <AlertTriangle className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                    {isError ? <AlertTriangle className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
                 </div>
             )}
 
             <div
-                className={`relative group max-w-[85%] rounded-2xl p-4 space-y-2 backdrop-blur shadow-md ${
+                className={`relative group max-w-[90%] sm:max-w-[85%] rounded-2xl px-3 sm:px-3.5 py-2 sm:py-2.5 space-y-1.5 backdrop-blur shadow-md break-words overflow-hidden ${
                     isUser
-                        ? 'bg-emerald-600 text-white rounded-tr-none'
+                        ? 'bg-gradient-to-r from-[#7C5CFF] to-[#35D6FF] text-[#050816] font-medium rounded-tr-none shadow-lg shadow-[#7C5CFF]/20'
                         : isError
-                        ? 'bg-amber-950/20 text-gray-200 border border-amber-500/30 rounded-tl-none'
-                        : 'bg-gray-900/90 text-gray-200 border border-gray-800 rounded-tl-none'
+                        ? 'bg-[#17121E] text-[#F4F7FF] border border-amber-500/30 rounded-tl-none'
+                        : 'bg-[#0D1424]/95 text-[#F4F7FF] border border-[rgba(148,163,184,0.14)] rounded-tl-none'
                 }`}
             >
                 {/* Header for assistant message */}
                 {!isUser && (
-                    <div className="flex items-center justify-between border-b border-gray-800/80 pb-2 text-[11px] text-gray-400">
+                    <div className="flex items-center justify-between border-b border-[rgba(148,163,184,0.12)] pb-1.5 text-[10px] sm:text-[11px] text-[#94A3B8]">
                         <div className="flex items-center gap-1.5 font-medium">
-                            <span className={isError ? 'text-amber-300 font-semibold' : 'text-gray-200 font-semibold'}>
-                                {isError ? 'AI Advisory Notice' : 'HyperStocks Assistant'}
+                            <span className={isError ? 'text-amber-300 font-semibold' : 'text-[#35D6FF] font-semibold'}>
+                                {isError ? 'System Advisory Notice' : 'AI Financial Assistant'}
                             </span>
-                            {model && !isError && <span className="text-[10px] text-gray-500">({model})</span>}
+                            {model && !isError && <span className="text-[10px] text-[#94A3B8]/70">({model})</span>}
                         </div>
 
                         {!isError && (
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={handleCopy}
-                                    className="p-1 text-gray-400 hover:text-gray-200 rounded"
+                                    className="p-1 text-[#94A3B8] hover:text-[#F4F7FF] rounded"
                                     title="Copy response"
                                 >
-                                    {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                                    {copied ? <Check className="h-3.5 w-3.5 text-[#3DFFA0]" /> : <Copy className="h-3.5 w-3.5" />}
                                 </button>
                             </div>
                         )}
@@ -206,7 +206,7 @@ export function AIMessage({
                 <div className="space-y-1">
                     {renderFormattedContent(content)}
                     {isStreaming && (
-                        <span className="inline-block h-3.5 w-1.5 bg-emerald-400 animate-pulse ml-1" />
+                        <span className="inline-block h-3.5 w-1.5 bg-[#35D6FF] animate-pulse ml-1" />
                     )}
                 </div>
 
@@ -225,15 +225,15 @@ export function AIMessage({
 
                 {/* Timestamp */}
                 {timestamp && (
-                    <div className={`text-[10px] pt-1 text-right ${isUser ? 'text-emerald-100/70' : 'text-gray-500'}`}>
+                    <div className={`text-[10px] pt-1 text-right ${isUser ? 'text-[#050816]/75' : 'text-[#94A3B8]'}`}>
                         {new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                 )}
             </div>
 
             {isUser && (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gray-800 border border-gray-700 text-gray-300 mt-0.5">
-                    <User className="h-4 w-4" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#111B2E] border border-[rgba(148,163,184,0.18)] text-[#F4F7FF] mt-0.5">
+                    <User className="h-4 w-4 text-[#35D6FF]" />
                 </div>
             )}
         </div>

@@ -96,17 +96,17 @@ export function AIMarketInsights({ className = '' }: { className?: string }) {
         <div className={`space-y-5 ${className}`}>
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-                        <Zap className="h-5 w-5 text-emerald-400" />
-                        AI Market Insights
+                    <h2 className="text-xl font-bold text-[#F4F7FF] flex items-center gap-2">
+                        <Zap className="h-5 w-5 text-[#35D6FF]" />
+                        Market Events & Insights
                     </h2>
-                    <p className="text-xs text-gray-400">
-                        Real-time algorithmic detection of abnormal volume, sector rotations, and market catalyst events
+                    <p className="text-xs text-[#94A3B8]">
+                        Algorithmic telemetry tracking unusual volume surges, sector rotation velocity, and breaking macro catalysts
                     </p>
                 </div>
 
                 {/* Filter pills */}
-                <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-gray-900/80 p-1.5 border border-gray-800 backdrop-blur">
+                <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-[#0D1424] p-1.5 border border-[rgba(148,163,184,0.14)] backdrop-blur">
                     {categories.map((cat) => {
                         const Icon = cat.icon;
                         const active = activeFilter === cat.id;
@@ -116,8 +116,8 @@ export function AIMarketInsights({ className = '' }: { className?: string }) {
                                 onClick={() => setActiveFilter(cat.id)}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition ${
                                     active
-                                        ? 'bg-emerald-500 text-gray-950 font-bold shadow-md shadow-emerald-500/20'
-                                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                                        ? 'bg-gradient-to-r from-[#7C5CFF] to-[#35D6FF] text-[#050816] font-bold shadow-md shadow-[#7C5CFF]/20'
+                                        : 'text-[#94A3B8] hover:text-[#F4F7FF] hover:bg-[#111B2E]'
                                 }`}
                             >
                                 <Icon className="h-3.5 w-3.5" />
@@ -133,7 +133,7 @@ export function AIMarketInsights({ className = '' }: { className?: string }) {
                 {filtered.map((item) => (
                     <div
                         key={item.id}
-                        className="group flex flex-col justify-between rounded-2xl border border-gray-800 bg-gray-900/60 p-5 hover:border-gray-700 hover:bg-gray-850/60 transition backdrop-blur space-y-3 shadow-lg"
+                        className="group flex flex-col justify-between rounded-2xl border border-[rgba(148,163,184,0.14)] bg-[#0D1424]/85 p-5 hover:border-[#7C5CFF]/40 hover:-translate-y-1 transition duration-200 backdrop-blur space-y-3 shadow-xl"
                     >
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
@@ -141,10 +141,10 @@ export function AIMarketInsights({ className = '' }: { className?: string }) {
                                     <span
                                         className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                                             item.sentiment === 'bullish'
-                                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                                ? 'bg-[#3DFFA0]/15 text-[#3DFFA0] border-[#3DFFA0]/30'
                                                 : item.sentiment === 'bearish'
-                                                ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                                                : 'bg-gray-800 text-gray-300 border-gray-700'
+                                                ? 'bg-[#FF5470]/15 text-[#FF5470] border-[#FF5470]/30'
+                                                : 'bg-[#111B2E] text-[#35D6FF] border-[#35D6FF]/30'
                                         }`}
                                     >
                                         {item.sentiment === 'bullish' ? (
@@ -160,38 +160,38 @@ export function AIMarketInsights({ className = '' }: { className?: string }) {
                                     {item.symbol && (
                                         <Link
                                             href={`/stocks/${item.symbol}`}
-                                            className="text-xs font-bold text-gray-100 hover:text-emerald-400 transition"
+                                            className="text-xs font-bold text-[#F4F7FF] hover:text-[#35D6FF] transition"
                                         >
                                             ${item.symbol}
                                         </Link>
                                     )}
                                 </div>
 
-                                <div className="flex items-center gap-1 text-[11px] text-gray-500">
+                                <div className="flex items-center gap-1 text-[11px] text-[#94A3B8]">
                                     <Clock className="h-3 w-3" />
                                     {item.timestamp}
                                 </div>
                             </div>
 
-                            <h4 className="text-sm font-semibold text-gray-100 group-hover:text-emerald-300 transition leading-snug">
+                            <h4 className="text-sm font-semibold text-[#F4F7FF] group-hover:text-[#35D6FF] transition leading-snug">
                                 {item.title}
                             </h4>
 
-                            <p className="text-xs text-gray-400 leading-relaxed">
+                            <p className="text-xs text-[#94A3B8] leading-relaxed">
                                 {item.description}
                             </p>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-800/80 text-xs">
+                        <div className="flex items-center justify-between pt-2 border-t border-[rgba(148,163,184,0.12)] text-xs">
                             {item.metric && (
-                                <span className="font-mono text-xs font-bold text-gray-300 bg-gray-800 px-2 py-0.5 rounded">
+                                <span className="font-mono text-xs font-bold text-[#CBD5E1] bg-[#111B2E] px-2.5 py-0.5 rounded-lg border border-[rgba(148,163,184,0.1)]">
                                     {item.metric}
                                 </span>
                             )}
                             {item.symbol && (
                                 <Link
                                     href={`/stocks/${item.symbol}`}
-                                    className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 font-medium ml-auto"
+                                    className="inline-flex items-center gap-1 text-xs text-[#35D6FF] hover:text-[#3DFFA0] font-medium ml-auto transition"
                                 >
                                     Deep Dive <ArrowUpRight className="h-3.5 w-3.5" />
                                 </Link>

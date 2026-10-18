@@ -78,34 +78,34 @@ export function WatchlistIntelligenceGrid({
     const data = items && items.length > 0 ? items : defaultItems;
 
     const signalBadge: Record<WatchlistIntelligenceItem['technicalSignal'], string> = {
-        'Strong Buy': 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30',
-        Buy: 'text-green-400 bg-green-500/15 border-green-500/30',
+        'Strong Buy': 'text-[#3DFFA0] bg-[#3DFFA0]/15 border-[#3DFFA0]/30',
+        Buy: 'text-[#35D6FF] bg-[#35D6FF]/15 border-[#35D6FF]/30',
         Neutral: 'text-amber-400 bg-amber-500/15 border-amber-500/30',
         Sell: 'text-orange-400 bg-orange-500/15 border-orange-500/30',
-        'Strong Sell': 'text-rose-400 bg-rose-500/15 border-rose-500/30',
+        'Strong Sell': 'text-[#FF5470] bg-[#FF5470]/15 border-[#FF5470]/30',
     };
 
     const riskBadge: Record<WatchlistIntelligenceItem['riskLevel'], string> = {
-        Low: 'text-emerald-400 border-emerald-500/30 bg-emerald-950/20',
-        Medium: 'text-amber-400 border-amber-500/30 bg-amber-950/20',
-        High: 'text-rose-400 border-rose-500/30 bg-rose-950/20',
+        Low: 'text-[#3DFFA0] border-[#3DFFA0]/30 bg-[#3DFFA0]/10',
+        Medium: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
+        High: 'text-[#FF5470] border-[#FF5470]/30 bg-[#FF5470]/10',
     };
 
     return (
         <div className={`space-y-4 ${className}`}>
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-                        <Eye className="h-5 w-5 text-emerald-400" />
-                        Watchlist Intelligence
+                    <h2 className="text-xl font-bold text-[#F4F7FF] flex items-center gap-2">
+                        <Eye className="h-5 w-5 text-[#35D6FF]" />
+                        Watchlist Intelligence Telemetry
                     </h2>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-[#94A3B8]">
                         Contextual AI synthesis explaining intraday price drivers, sentiment balance, and tactical risk ratings
                     </p>
                 </div>
                 <Link
                     href="/watchlist"
-                    className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+                    className="text-xs font-semibold text-[#35D6FF] hover:text-[#3DFFA0] flex items-center gap-1 transition"
                 >
                     Full Watchlist <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
@@ -115,34 +115,34 @@ export function WatchlistIntelligenceGrid({
                 {data.map((item) => (
                     <div
                         key={item.symbol}
-                        className="rounded-2xl border border-gray-800 bg-gray-900/70 p-5 backdrop-blur space-y-4 shadow-lg hover:border-gray-700 transition"
+                        className="rounded-2xl border border-[rgba(148,163,184,0.14)] bg-[#0D1424]/85 p-5 backdrop-blur space-y-4 shadow-xl hover:border-[#7C5CFF]/40 hover:-translate-y-1 transition duration-200"
                     >
                         {/* Ticker Header */}
-                        <div className="flex items-center justify-between border-b border-gray-800/80 pb-3">
+                        <div className="flex items-center justify-between border-b border-[rgba(148,163,184,0.12)] pb-3">
                             <div>
                                 <div className="flex items-center gap-2">
                                     <Link
                                         href={`/stocks/${item.symbol}`}
-                                        className="text-base font-bold text-gray-100 hover:text-emerald-400 transition"
+                                        className="text-base font-bold text-[#F4F7FF] hover:text-[#35D6FF] transition font-mono"
                                     >
-                                        {item.symbol}
+                                        ${item.symbol}
                                     </Link>
-                                    <span className="text-xs text-gray-400 truncate max-w-[160px]">
+                                    <span className="text-xs text-[#94A3B8] truncate max-w-[160px]">
                                         {item.company}
                                     </span>
                                 </div>
-                                <div className="text-xs text-gray-500">
-                                    Confidence: <span className="font-semibold text-gray-300">{item.confidenceScore}%</span>
+                                <div className="text-xs text-[#94A3B8]">
+                                    Conviction: <span className="font-semibold text-[#CBD5E1] font-mono">{item.confidenceScore}%</span>
                                 </div>
                             </div>
 
                             <div className="text-right">
-                                <div className="text-base font-bold text-gray-100">
+                                <div className="text-base font-bold text-[#F4F7FF] font-mono">
                                     ${item.currentPrice.toFixed(2)}
                                 </div>
                                 <div
-                                    className={`text-xs font-bold flex items-center justify-end gap-0.5 ${
-                                        item.changePercent >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                                    className={`text-xs font-bold font-mono flex items-center justify-end gap-0.5 ${
+                                        item.changePercent >= 0 ? 'text-[#3DFFA0]' : 'text-[#FF5470]'
                                     }`}
                                 >
                                     {item.changePercent >= 0 ? (
@@ -157,12 +157,12 @@ export function WatchlistIntelligenceGrid({
                         </div>
 
                         {/* Why it's moving */}
-                        <div className="rounded-xl bg-gray-850/50 p-3 border border-gray-800 space-y-1">
-                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
-                                <Sparkles className="h-3 w-3" />
-                                Why It&apos;s Moving
+                        <div className="rounded-xl bg-[#111B2E]/60 p-3 border border-[rgba(148,163,184,0.1)] space-y-1">
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#35D6FF] uppercase tracking-wider">
+                                <Sparkles className="h-3 w-3 text-[#7C5CFF]" />
+                                Planetary Driver
                             </div>
-                            <p className="text-xs text-gray-300 leading-relaxed">
+                            <p className="text-xs text-[#CBD5E1] leading-relaxed">
                                 {item.movementReason}
                             </p>
                         </div>
@@ -188,15 +188,15 @@ export function WatchlistIntelligenceGrid({
                                 </span>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-gray-400 text-[11px]">
+                            <div className="flex items-center gap-1.5 text-[#94A3B8] text-[11px]">
                                 <span>Sentiment:</span>
                                 <span
                                     className={`font-semibold capitalize ${
                                         item.newsSentiment === 'bullish'
-                                            ? 'text-emerald-400'
+                                            ? 'text-[#3DFFA0]'
                                             : item.newsSentiment === 'bearish'
-                                            ? 'text-rose-400'
-                                            : 'text-gray-300'
+                                            ? 'text-[#FF5470]'
+                                            : 'text-[#CBD5E1]'
                                     }`}
                                 >
                                     {item.newsSentiment} ({(item.sentimentScore * 100).toFixed(0)}%)

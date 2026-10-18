@@ -8,11 +8,30 @@ import {
    Transporter
 -------------------------------------------------- */
 
+export const getFromAddress = (defaultName = "HyperStocks News") => {
+    const senderEmail =
+        process.env.NODEMAILER_EMAIL ||
+        process.env.EMAIL_USER ||
+        process.env.SMTP_USER ||
+        process.env.SMTP_FROM_EMAIL ||
+        "agent8028agent@gmail.com";
+    const senderName = process.env.SMTP_FROM_NAME || defaultName;
+    return `"${senderName}" <${senderEmail}>`;
+};
+
 export const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: process.env.NODEMAILER_EMAIL!,
-        pass: process.env.NODEMAILER_PASSWORD!,
+        user:
+            process.env.NODEMAILER_EMAIL ||
+            process.env.EMAIL_USER ||
+            process.env.SMTP_USER ||
+            "agent8028agent@gmail.com",
+        pass:
+            process.env.NODEMAILER_PASSWORD ||
+            process.env.EMAIL_PASS ||
+            process.env.SMTP_PASSWORD ||
+            "",
     },
 });
 
@@ -30,7 +49,7 @@ export const sendWelcomeEmail = async ({
         .replace("{{intro}}", intro);
 
     await transporter.sendMail({
-        from: `"HyperStocks" <${process.env.NODEMAILER_EMAIL}>`,
+        from: getFromAddress("HyperStocks"),
         to: email,
         subject: "Welcome to HyperStocks - your stock market toolkit is ready!",
         text: "Thanks for joining HyperStocks",
@@ -41,6 +60,37 @@ export const sendWelcomeEmail = async ({
 /* --------------------------------------------------
    News Summary Email
 -------------------------------------------------- */
+
+export { renderWatchlistNewsEmail } from "@/services/email/templates/watchlistNewsEmailTemplate";
+import { renderWatchlistNewsEmail } from "@/services/email/templates/watchlistNewsEmailTemplate";
+import { WatchlistNewsResult } from "@/services/news/WatchlistNewsService";
+
+export const sendPersonalizedWatchlistNewsEmail = async ({
+    email,
+    name,
+    date,
+    result,
+}: {
+    email: string;
+    name?: string;
+    date: string;
+    result: WatchlistNewsResult;
+}) => {
+    const { subject, html, text } = renderWatchlistNewsEmail({
+        recipientEmail: email,
+        recipientName: name,
+        dateStr: date,
+        result,
+    });
+
+    return await transporter.sendMail({
+        from: getFromAddress("HyperStocks News"),
+        to: email,
+        subject,
+        text,
+        html,
+    });
+};
 
 export const sendNewsSummaryEmail = async ({
                                                email,
@@ -56,7 +106,7 @@ export const sendNewsSummaryEmail = async ({
         .replace("{{newsContent}}", newsContent);
 
     await transporter.sendMail({
-        from: `"HyperStocks News" <${process.env.NODEMAILER_EMAIL}>`,
+        from: getFromAddress("HyperStocks News"),
         to: email,
         subject: `📈 Market News Summary - ${date}`,
         text: "Today's market news summary from HyperStocks",
@@ -94,7 +144,7 @@ export const sendAlertEmail = async ({
     `;
 
     await transporter.sendMail({
-        from: `"HyperStocks Alerts" <${process.env.NODEMAILER_EMAIL}>`,
+        from: getFromAddress("HyperStocks Alerts"),
         to: email,
         subject,
         text: `Price alert triggered for ${symbol}`,

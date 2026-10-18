@@ -50,31 +50,31 @@ export function AIOpportunitiesRadar({ className = '' }: { className?: string })
         <div className={`space-y-4 ${className}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-                        <Target className="h-5 w-5 text-emerald-400" />
-                        AI Opportunities Radar
-                        <span className="text-xs font-normal text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                            Personalized
+                    <h2 className="text-xl font-bold text-[#F4F7FF] flex items-center gap-2">
+                        <Target className="h-5 w-5 text-[#3DFFA0]" />
+                        <span>AI Opportunities Radar</span>
+                        <span className="text-[11px] font-semibold text-[#3DFFA0] bg-[#3DFFA0]/10 px-2.5 py-0.5 rounded-full border border-[#3DFFA0]/30">
+                            AI Ranked
                         </span>
                     </h2>
-                    <p className="text-xs text-gray-400">
-                        Ranked for a{' '}
-                        <span className="text-emerald-300 font-medium">
+                    <p className="text-xs text-[#94A3B8] mt-0.5">
+                        Calibrated for a{' '}
+                        <span className="text-[#3DFFA0] font-medium">
                             {preferences.riskTolerance}
                         </span>{' '}
                         profile prioritizing{' '}
-                        <span className="text-emerald-300 font-medium">
-                            {preferences.preferredSectors?.slice(0, 2).join(' & ') || 'Technology'}
+                        <span className="text-[#35D6FF] font-medium">
+                            {preferences.preferredSectors?.slice(0, 2).join(' & ') || 'Technology & Growth'}
                         </span>
                     </p>
                 </div>
 
                 <button
                     onClick={openOnboarding}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-800 bg-gray-900/80 text-xs font-medium text-gray-300 hover:text-emerald-400 hover:border-emerald-500/30 transition"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[rgba(148,163,184,0.2)] bg-[#111B2E]/70 text-xs font-medium text-[#F4F7FF] hover:text-[#35D6FF] hover:border-[#35D6FF]/40 transition"
                 >
                     <SlidersHorizontal className="h-3.5 w-3.5" />
-                    Tune Personalization
+                    Tune Radar
                 </button>
             </div>
 
@@ -82,26 +82,26 @@ export function AIOpportunitiesRadar({ className = '' }: { className?: string })
                 {opportunities.slice(0, 3).map((opp) => (
                     <div
                         key={opp.symbol}
-                        className="flex flex-col justify-between rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-gray-900/90 to-emerald-950/10 p-5 backdrop-blur shadow-lg space-y-4 hover:border-emerald-500/40 transition"
+                        className="orbital-card orbital-card-interactive flex flex-col justify-between p-5 space-y-4"
                     >
-                        <div className="space-y-2.5">
+                        <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-lg font-bold text-gray-100">
+                                        <span className="text-lg font-bold font-mono text-[#F4F7FF]">
                                             {opp.symbol}
                                         </span>
-                                        <span className="text-xs text-gray-400 truncate max-w-[120px]">
+                                        <span className="text-xs text-[#94A3B8] truncate max-w-[120px]">
                                             {opp.company}
                                         </span>
                                     </div>
-                                    <div className="text-[11px] text-gray-500">
-                                        Horizon: <span className="text-gray-300 font-medium">{opp.timeframe}</span>
+                                    <div className="text-[11px] text-[#94A3B8]">
+                                        Horizon: <span className="text-[#F4F7FF] font-medium">{opp.timeframe}</span>
                                     </div>
                                 </div>
 
                                 <div className="text-right">
-                                    <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/30 font-mono">
+                                    <span className="text-xs font-bold text-[#3DFFA0] bg-[#3DFFA0]/10 px-2.5 py-1 rounded-full border border-[#3DFFA0]/30 font-mono">
                                         {opp.matchScore}% Match
                                     </span>
                                 </div>
@@ -113,7 +113,7 @@ export function AIOpportunitiesRadar({ className = '' }: { className?: string })
                                     {opp.matchingFactors.slice(0, 2).map((factor, i) => (
                                         <span
                                             key={i}
-                                            className="text-[10px] text-teal-300/90 bg-teal-950/40 border border-teal-500/20 px-2 py-0.5 rounded-md"
+                                            className="text-[10px] text-[#35D6FF] bg-[#35D6FF]/10 border border-[#35D6FF]/20 px-2 py-0.5 rounded-md"
                                         >
                                             {factor}
                                         </span>
@@ -121,34 +121,34 @@ export function AIOpportunitiesRadar({ className = '' }: { className?: string })
                                 </div>
                             )}
 
-                            <p className="text-xs text-gray-300 leading-relaxed bg-gray-850/60 p-3 rounded-xl border border-gray-800">
+                            <p className="text-xs text-[#94A3B8] leading-relaxed bg-[#050816]/70 p-3 rounded-xl border border-[rgba(148,163,184,0.1)]">
                                 {opp.thesis}
                             </p>
 
                             <div className="space-y-1.5 text-xs">
-                                <div className="flex items-center gap-1.5 font-semibold text-yellow-400 text-[11px]">
+                                <div className="flex items-center gap-1.5 font-semibold text-amber-300 text-[11px]">
                                     <Zap className="h-3 w-3" />
                                     Expected Catalyst
                                 </div>
-                                <p className="text-[11px] text-gray-400 leading-snug">{opp.catalyst}</p>
+                                <p className="text-[11px] text-[#94A3B8] leading-snug">{opp.catalyst}</p>
                             </div>
                         </div>
 
-                        <div className="space-y-2.5 pt-2 border-t border-gray-800/80">
-                            <div className="text-[11px] font-mono text-gray-400 bg-gray-850 px-2.5 py-1 rounded">
+                        <div className="space-y-2.5 pt-2 border-t border-[rgba(148,163,184,0.12)]">
+                            <div className="text-[11px] font-mono text-[#94A3B8] bg-[#050816]/60 px-2.5 py-1 rounded border border-[rgba(148,163,184,0.08)]">
                                 {opp.metricsHighlight}
                             </div>
 
                             <div className="flex items-center justify-between text-xs pt-1">
-                                <span className="text-[11px] text-gray-400">
+                                <span className="text-[11px] text-[#94A3B8]">
                                     Risk:{' '}
                                     <span
                                         className={`font-semibold ${
                                             opp.risk === 'Low'
-                                                ? 'text-emerald-400'
+                                                ? 'text-[#3DFFA0]'
                                                 : opp.risk === 'High'
-                                                ? 'text-rose-400'
-                                                : 'text-amber-400'
+                                                ? 'text-[#FF5470]'
+                                                : 'text-amber-300'
                                         }`}
                                     >
                                         {opp.risk}
@@ -157,7 +157,7 @@ export function AIOpportunitiesRadar({ className = '' }: { className?: string })
 
                                 <Link
                                     href={`/stocks/${opp.symbol}`}
-                                    className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-semibold"
+                                    className="inline-flex items-center gap-1 text-[#35D6FF] hover:text-[#7C5CFF] font-semibold transition"
                                 >
                                     Deep Analysis
                                     <ArrowUpRight className="h-3.5 w-3.5" />

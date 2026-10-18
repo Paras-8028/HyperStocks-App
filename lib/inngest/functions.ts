@@ -5,11 +5,13 @@ import {
 } from "@/lib/inngest/prompts";
 import {
     sendNewsSummaryEmail,
+    sendPersonalizedWatchlistNewsEmail,
     sendWelcomeEmail,
 } from "@/lib/nodemailer";
 import { getAllUsersForNewsEmail } from "@/lib/actions/user.actions";
-import { getWatchlistSymbolsByEmail } from "@/lib/actions/watchlist.actions";
-import { getNews } from "@/lib/actions/finnhub.actions";
+import { getWatchlistStockItemsByEmail } from "@/lib/actions/watchlist.actions";
+import { WatchlistNewsService, WatchlistNewsResult } from "@/services/news/WatchlistNewsService";
+import { WatchlistNewsSummarizer } from "@/services/news/WatchlistNewsSummarizer";
 import { getFormattedTodayDate } from "@/lib/utils";
 
 /* =====================================================
@@ -74,7 +76,7 @@ export const sendDailyNewsSummary = inngest.createFunction(
     { id: "daily-news-summary" },
     [{ event: "app/send.daily.news" }, { cron: "0 12 * * *" }],
     async ({ step }) => {
-        // 1️⃣ Get users
+        // 1️⃣ Get users who are subscribed to daily news
         const users = await step.run(
             "get-all-users",
             getAllUsersForNewsEmail
@@ -83,102 +85,110 @@ export const sendDailyNewsSummary = inngest.createFunction(
         if (!users || users.length === 0) {
             return {
                 success: false,
-                message: "No users found for news email",
+                message: "No eligible users found for daily news email",
             };
         }
 
-        // 2️⃣ Fetch news per user
-        const results = await step.run("fetch-user-news", async () => {
-            const perUser = [];
+        const todayDate = getFormattedTodayDate();
+
+        // 2️⃣ Fetch personalized watchlist news per user
+        const userNewsResults = await step.run("fetch-personalized-news", async () => {
+            const watchlistService = new WatchlistNewsService();
+            const results: Array<{
+                user: { id: string; email: string; name: string };
+                result: WatchlistNewsResult;
+            }> = [];
 
             for (const user of users) {
                 try {
-                    const symbols = await getWatchlistSymbolsByEmail(
-                        user.email
+                    const watchlistItems = await getWatchlistStockItemsByEmail(user.email);
+                    const newsResult = await watchlistService.getPersonalizedWatchlistNews(
+                        watchlistItems,
+                        4, // 4 days lookback
+                        6  // max 6 high-relevance articles
                     );
-
-                    let articles = await getNews(symbols);
-                    articles = (articles || []).slice(0, 6);
-
-                    if (!articles || articles.length === 0) {
-                        articles = (await getNews()).slice(0, 6);
-                    }
-
-                    perUser.push({ user, articles });
-                } catch (e) {
-                    console.error(
-                        "daily-news: error preparing user news",
-                        user.email,
-                        e
-                    );
-                    perUser.push({ user, articles: [] });
+                    results.push({ user, result: newsResult });
+                } catch (e: any) {
+                    console.error("daily-news: error preparing watchlist news for", user.email, e);
+                    results.push({
+                        user,
+                        result: {
+                            status: 'api_error',
+                            articles: [],
+                            allTrackedSymbols: [],
+                            allTrackedCompanies: {},
+                            symbolsWithNews: [],
+                            symbolsWithoutNews: [],
+                            error: e?.message || 'Failed to fetch watchlist news',
+                        },
+                    });
                 }
             }
 
-            return perUser;
+            return results;
         });
 
-        // 3️⃣ AI summary
-        const userNewsSummaries: Array<{ user: any; newsContent: string | null }> = [];
+        // 3️⃣ Summarize articles using Gemini + Cache + Fallback
+        const summarizedResults = await step.run("summarize-articles", async () => {
+            const finalized: Array<{
+                user: { id: string; email: string; name: string };
+                result: WatchlistNewsResult;
+            }> = [];
 
-        for (const { user, articles } of results) {
-            try {
-                const prompt = NEWS_SUMMARY_EMAIL_PROMPT.replace(
-                    "{{newsData}}",
-                    JSON.stringify(articles, null, 2)
-                );
-
-                const response = await step.ai.infer(
-                    `summarize-news-${user.email}`,
-                    {
-                        model: step.ai.models.gemini({
-                            model: "gemini-2.5-flash-lite",
-                        }),
-                        body: {
-                            contents: [
-                                {
-                                    role: "user",
-                                    parts: [{ text: prompt }],
-                                },
-                            ],
+            for (const item of userNewsResults) {
+                if (item.result.articles.length > 0) {
+                    const summarizedArticles = await WatchlistNewsSummarizer.summarizeBatch(
+                        item.result.articles
+                    );
+                    finalized.push({
+                        user: item.user,
+                        result: {
+                            ...item.result,
+                            articles: summarizedArticles,
                         },
-                    }
-                );
-
-                const part =
-                    response.candidates?.[0]?.content?.parts?.[0];
-                const newsContent =
-                    (part && "text" in part ? part.text : null) ||
-                    "No market news.";
-
-                userNewsSummaries.push({ user, newsContent });
-            } catch (e) {
-                console.error(
-                    "Failed to summarize news for:",
-                    user.email
-                );
-                userNewsSummaries.push({ user, newsContent: null });
-            }
-        }
-
-        // 4️⃣ Send emails
-        await step.run("send-news-emails", async () => {
-            await Promise.all(
-                userNewsSummaries.map(({ user, newsContent }) => {
-                    if (!newsContent) return false;
-
-                    return sendNewsSummaryEmail({
-                        email: user.email,
-                        date: getFormattedTodayDate(),
-                        newsContent,
                     });
-                })
-            );
+                } else {
+                    finalized.push(item);
+                }
+            }
+
+            return finalized;
+        });
+
+        // 4️⃣ Send personalized emails (isolated per recipient)
+        const sendResults = await step.run("send-personalized-emails", async () => {
+            const sentLogs: Array<{ email: string; status: string; articleCount: number }> = [];
+
+            for (const { user, result } of summarizedResults) {
+                try {
+                    await sendPersonalizedWatchlistNewsEmail({
+                        email: user.email,
+                        name: user.name,
+                        date: todayDate,
+                        result,
+                    });
+                    sentLogs.push({
+                        email: user.email,
+                        status: 'sent',
+                        articleCount: result.articles.length,
+                    });
+                } catch (err: any) {
+                    console.error(`Failed to send watchlist news email to ${user.email}:`, err);
+                    sentLogs.push({
+                        email: user.email,
+                        status: `failed: ${err?.message || 'Unknown error'}`,
+                        articleCount: result.articles.length,
+                    });
+                }
+            }
+
+            return sentLogs;
         });
 
         return {
             success: true,
-            message: "Daily news summary emails sent successfully",
+            message: `Personalized watchlist news emails processed for ${sendResults.length} users`,
+            sentLogs: sendResults,
         };
     }
 );

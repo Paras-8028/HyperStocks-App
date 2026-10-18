@@ -15,4 +15,6 @@ export * from './FinnhubNewsService';
 export * from './NewsAnalyzerService';
 export * from './NewsClusteringService';
 export * from './NewsIntelligenceService';
+export * from './WatchlistNewsService';
+export * from './WatchlistNewsSummarizer';
 
