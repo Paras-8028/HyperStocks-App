@@ -4,6 +4,8 @@ import {
     FinancialMetrics,
     MarketSearchResult,
     StockQuote,
+    StockCandlesResult,
+    CandleResolution,
 } from '@/types/market';
 
 export interface IMarketDataProvider {
@@ -12,4 +14,11 @@ export interface IMarketDataProvider {
     getFinancialMetrics(symbol: string): Promise<ApiResult<FinancialMetrics>>;
     searchStocks(query?: string): Promise<ApiResult<MarketSearchResult[]>>;
     getMarketPeers(symbol: string): Promise<ApiResult<string[]>>;
+    getCandles(
+        symbol: string,
+        resolution: CandleResolution,
+        from: number,
+        to: number
+    ): Promise<ApiResult<StockCandlesResult>>;
 }
+

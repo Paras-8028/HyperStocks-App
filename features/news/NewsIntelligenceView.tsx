@@ -34,7 +34,7 @@ import Link from 'next/link';
 export function NewsIntelligenceView({ className = '' }: { className?: string }) {
     const [data, setData] = useState<NewsIntelligenceResponse | null>(null);
     const [loading, setLoading] = useState(true);
-    const [filterTab, setFilterTab] = useState<'all' | 'portfolio' | 'watchlist' | 'positive' | 'negative'>('all');
+    const [filterTab, setFilterTab] = useState<'all' | 'portfolio' | 'watchlist' | 'positive' | 'negative' | 'mixed'>('all');
     const [selectedSector, setSelectedSector] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedClusterId, setExpandedClusterId] = useState<string | null>(null);
@@ -89,10 +89,13 @@ export function NewsIntelligenceView({ className = '' }: { className?: string })
             return item.userRelevanceReasons.some((r) => r.toLowerCase().includes('watchlist'));
         }
         if (filterTab === 'positive') {
-            return cluster.dominantSentiment === 'positive';
+            return cluster.dominantSentiment === 'positive' || (cluster.dominantSentiment as string) === 'bullish';
         }
         if (filterTab === 'negative') {
-            return cluster.dominantSentiment === 'negative';
+            return cluster.dominantSentiment === 'negative' || (cluster.dominantSentiment as string) === 'bearish';
+        }
+        if (filterTab === 'mixed') {
+            return cluster.dominantSentiment === 'mixed';
         }
 
         return true;
@@ -110,17 +113,26 @@ export function NewsIntelligenceView({ className = '' }: { className?: string })
     const getSentimentBadge = (sentiment: NewsSentimentLabel) => {
         switch (sentiment) {
             case 'positive':
+            case 'bullish':
                 return (
                     <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
                         <TrendingUp className="h-3 w-3" />
-                        POSITIVE
+                        BULLISH
                     </span>
                 );
             case 'negative':
+            case 'bearish':
                 return (
                     <span className="inline-flex items-center gap-1 rounded-md bg-rose-500/10 border border-rose-500/30 px-2 py-0.5 text-[10px] font-bold text-rose-400">
                         <TrendingDown className="h-3 w-3" />
-                        NEGATIVE
+                        BEARISH
+                    </span>
+                );
+            case 'mixed':
+                return (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-purple-500/10 border border-purple-500/30 px-2 py-0.5 text-[10px] font-bold text-purple-300">
+                        <Activity className="h-3 w-3" />
+                        MIXED
                     </span>
                 );
             default:
@@ -365,6 +377,16 @@ export function NewsIntelligenceView({ className = '' }: { className?: string })
                             }`}
                         >
                             Bearish / Risks
+                        </button>
+                        <button
+                            onClick={() => setFilterTab('mixed')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+                                filterTab === 'mixed'
+                                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                                    : 'text-gray-400 hover:text-gray-200'
+                            }`}
+                        >
+                            Mixed
                         </button>
                     </div>
 

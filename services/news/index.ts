@@ -17,4 +17,6 @@ export * from './NewsClusteringService';
 export * from './NewsIntelligenceService';
 export * from './WatchlistNewsService';
 export * from './WatchlistNewsSummarizer';
+export * from './NewsSentimentCollectorService';
+export * from './HistoricalSentimentEvaluator';
 

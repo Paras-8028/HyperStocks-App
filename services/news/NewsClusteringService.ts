@@ -164,6 +164,14 @@ export class NewsClusteringService {
     }
 
     private static resolveDominantSentiment(articles: AnalyzedNewsArticle[]): NewsSentimentLabel {
+        const hasPos = articles.some((a) => a.sentiment.label === 'positive' || a.sentiment.score >= 0.25);
+        const hasNeg = articles.some((a) => a.sentiment.label === 'negative' || a.sentiment.score <= -0.25);
+        const hasMixed = articles.some((a) => a.sentiment.label === 'mixed');
+
+        if (hasMixed || (hasPos && hasNeg)) {
+            return 'mixed';
+        }
+
         let scoreSum = 0;
         articles.forEach((a) => {
             scoreSum += a.sentiment.score;

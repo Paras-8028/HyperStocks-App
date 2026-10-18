@@ -67,6 +67,7 @@ export interface AlertEmailData {
     detectedSignal?: string;
     actionLabel?: string;
     actionUrl?: string;
+    riskAssessment?: import('./risk').DownsideRiskAssessment;
 }
 
 export interface IndexPerformance {

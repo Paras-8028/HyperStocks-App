@@ -25,34 +25,33 @@ export function HeaderClient({ user, initialStocks }: HeaderClientProps) {
     }, [pathname]);
 
     return (
-        <header className="sticky top-0 z-50 w-full h-[70px] bg-[#050816]/85 backdrop-blur-xl border-b border-[rgba(148,163,184,0.14)] transition-all">
-            <div className="container flex justify-between items-center h-full px-4 sm:px-6">
-                {/* Brand Logo & Live Status Indicator */}
-                <Link href="/overview" className="flex items-center gap-2.5 group">
-                    <Image
-                        src="/assets/icons/L1.png"
-                        alt="HyperStocks logo"
-                        width={135}
-                        height={32}
-                        priority
-                        className="h-9 w-auto cursor-pointer transition-transform duration-200 group-hover:scale-105"
-                    />
-                    <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-gradient-to-r from-[#7C5CFF]/15 to-[#35D6FF]/15 text-[#35D6FF] border border-[#35D6FF]/30 shadow-[0_0_12px_rgba(53,214,255,0.15)]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#3DFFA0] animate-pulse"></span>
-                        LIVE
-                    </span>
-                </Link>
+        <header className="sticky top-0 z-50 w-full h-[68px] bg-[#050816]/90 backdrop-blur-xl border-b border-[rgba(148,163,184,0.12)] transition-all">
+            <div className="max-w-7xl mx-auto flex items-center justify-between h-full px-4 sm:px-6 lg:px-8">
+                {/* Brand Logo (Clean presentation without LIVE badge) */}
+                <div className="flex items-center shrink-0">
+                    <Link href="/overview" className="flex items-center group" aria-label="HyperStocks Overview">
+                        <Image
+                            src="/assets/icons/L1.png"
+                            alt="HyperStocks logo"
+                            width={130}
+                            height={30}
+                            priority
+                            className="h-8 sm:h-9 w-auto cursor-pointer transition-transform duration-200 group-hover:scale-[1.02]"
+                        />
+                    </Link>
+                </div>
 
                 {/* Signed-In Navigation */}
                 <Show when="signed-in">
                     {/* Desktop Navigation */}
-                    <nav className="hidden lg:block">
+                    <nav className="hidden lg:flex items-center justify-center flex-1 mx-4 xl:mx-8">
                         <NavItems initialStocks={initialStocks} />
                     </nav>
 
-                    {/* Right Controls: Alerts, User Profile, Mobile Hamburger */}
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    {/* Right Section: Smart Alerts, Subtle Divider, Account, Mobile Hamburger */}
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         <SmartAlertCenter />
+                        <div className="h-4 w-px bg-[rgba(148,163,184,0.16)] hidden sm:block" aria-hidden="true" />
                         <UserDropdown user={user} initialStocks={initialStocks} />
 
                         {/* Mobile Menu Hamburger Button */}
@@ -69,7 +68,7 @@ export function HeaderClient({ user, initialStocks }: HeaderClientProps) {
 
                 {/* Signed-Out Navigation */}
                 <Show when="signed-out">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                         <Link
                             href="/sign-in"
                             className="text-xs font-semibold text-[#94A3B8] hover:text-[#F4F7FF] transition-colors px-3 py-1.5"
@@ -88,7 +87,7 @@ export function HeaderClient({ user, initialStocks }: HeaderClientProps) {
 
             {/* Mobile Navigation Drawer */}
             {mobileMenuOpen && (
-                <div className="lg:hidden fixed inset-x-0 top-[70px] bg-[#050816]/95 backdrop-blur-2xl border-b border-[rgba(148,163,184,0.18)] p-5 shadow-2xl animate-in slide-in-from-top-2 duration-200 z-50">
+                <div className="lg:hidden fixed inset-x-0 top-[68px] bg-[#050816]/95 backdrop-blur-2xl border-b border-[rgba(148,163,184,0.18)] p-5 shadow-2xl animate-in slide-in-from-top-2 duration-200 z-50">
                     <NavItems
                         initialStocks={initialStocks}
                         mobile

@@ -1,6 +1,7 @@
 import { AlertEmailData, DailyDigestEmailData, EmailSendResult } from '@/types/email';
 import { getMailTransporter, getSenderEmail } from '@/services/email/mailer';
 import { buildAlertEmailHtml, generateAlertSubject } from '@/services/email/templates/alertEmailTemplate';
+import { buildDownsideRiskEmailHtml } from '@/services/email/templates/downsideRiskEmailTemplate';
 import { buildDailyDigestEmailHtml } from '@/services/email/templates/dailyDigestTemplate';
 
 export interface IEmailService {
@@ -36,7 +37,9 @@ export class EmailService implements IEmailService {
             }
 
             const subject = generateAlertSubject(data);
-            const html = buildAlertEmailHtml(data);
+            const html = data.alertType === 'downside_risk'
+                ? buildDownsideRiskEmailHtml(data)
+                : buildAlertEmailHtml(data);
             const from = getSenderEmail();
 
             const info = await transporter.sendMail({

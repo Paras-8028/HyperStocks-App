@@ -6,6 +6,7 @@ import {
     SectorImpact,
     StockImpact,
 } from '@/types/news';
+import { ConfidenceDimensionService } from './WatchlistNewsSummarizer';
 
 // Standard mapping of recognized market symbols to names and sectors
 const KNOWN_ENTITIES: Record<
@@ -143,7 +144,7 @@ export class NewsAnalyzerService {
         const text = `${raw.headline} ${raw.summary}`.toLowerCase();
 
         // 1. Sentiment Analysis
-        const sentiment = this.computeSentiment(text, raw.headline.toLowerCase());
+        const sentiment = this.computeSentiment(text, raw.headline.toLowerCase(), raw.source, raw.url);
 
         // 2. Stock Impact Detection
         const affectedStocks = this.extractStockImpacts(text, raw.headline, raw.relatedSymbol, sentiment.label);
@@ -159,7 +160,7 @@ export class NewsAnalyzerService {
         };
     }
 
-    private static computeSentiment(text: string, headline: string): NewsSentiment {
+    private static computeSentiment(text: string, headline: string, source: string = '', url: string = ''): NewsSentiment {
         let score = 0;
         let posCount = 0;
         let negCount = 0;
@@ -189,22 +190,50 @@ export class NewsAnalyzerService {
         const normalized = Math.max(-1.0, Math.min(1.0, score));
 
         let label: NewsSentimentLabel = 'neutral';
-        if (normalized >= 0.25) {
+        if (posCount > 0 && negCount > 0) {
+            label = 'mixed';
+        } else if (normalized >= 0.25) {
             label = 'positive';
         } else if (normalized <= -0.25) {
             label = 'negative';
         }
 
-        const confidence = Math.min(
-            0.98,
-            Math.max(0.65, 0.5 + Math.abs(normalized) * 0.4 + (posCount + negCount) * 0.05)
+        const sourceRel = ConfidenceDimensionService.evaluateSourceReliability(source, url);
+        const hasCatalyst = posCount > 0 || negCount > 0;
+        const isMixed = label === 'mixed';
+        const interpEval = ConfidenceDimensionService.evaluateInterpretationConfidence(headline, text, hasCatalyst, isMixed);
+        const hasMacro = /\b(fed|rate|inflation|treasury|macro)\b/i.test(text);
+        const dirUncertainty = ConfidenceDimensionService.evaluateMarketDirectionalUncertainty(
+            label === 'positive' ? 'bullish' : label === 'negative' ? 'bearish' : label === 'mixed' ? 'mixed' : 'neutral',
+            hasMacro,
+            isMixed
         );
+
+        const confidenceDimensions = {
+            sourceReliabilityScore: sourceRel.score,
+            sourceReliabilityTier: sourceRel.tier,
+            sourceReliabilityRationale: sourceRel.rationale,
+            interpretationConfidenceScore: interpEval.score,
+            interpretationRationale: interpEval.rationale,
+            marketDirectionalUncertaintyScore: dirUncertainty.score,
+            directionalUncertaintyLevel: dirUncertainty.level,
+            directionalUncertaintyRationale: dirUncertainty.rationale,
+            calibrationDisclaimer: ConfidenceDimensionService.CALIBRATION_DISCLAIMER,
+        };
 
         return {
             label,
             score: Number(normalized.toFixed(2)),
-            confidence: Number(confidence.toFixed(2)),
+            confidence: Number(interpEval.score.toFixed(2)),
+            confidenceDimensions,
         };
+    }
+
+    private static toDirection(sentimentLabel: NewsSentimentLabel): 'positive' | 'neutral' | 'negative' | 'mixed' {
+        if (sentimentLabel === 'bullish' || sentimentLabel === 'positive') return 'positive';
+        if (sentimentLabel === 'bearish' || sentimentLabel === 'negative') return 'negative';
+        if (sentimentLabel === 'mixed') return 'mixed';
+        return 'neutral';
     }
 
     private static extractStockImpacts(
@@ -215,6 +244,7 @@ export class NewsAnalyzerService {
     ): StockImpact[] {
         const impacts: StockImpact[] = [];
         const seenSymbols = new Set<string>();
+        const direction = this.toDirection(sentimentLabel);
 
         // If Finnhub provides a relatedSymbol, prioritize it
         if (relatedSymbol) {
@@ -224,7 +254,7 @@ export class NewsAnalyzerService {
             impacts.push({
                 symbol: sym,
                 companyName: entity?.name || sym,
-                direction: sentimentLabel,
+                direction,
                 magnitude: headline.toUpperCase().includes(sym) ? 'high' : 'medium',
                 reason: `Direct ticker association in market news`,
             });
@@ -248,7 +278,7 @@ export class NewsAnalyzerService {
                 impacts.push({
                     symbol: sym,
                     companyName: info.name,
-                    direction: sentimentLabel,
+                    direction,
                     magnitude: inHeadline ? 'high' : 'medium',
                     reason: inHeadline
                         ? `Featured prominently in news headline`
@@ -266,6 +296,7 @@ export class NewsAnalyzerService {
         sentimentLabel: NewsSentimentLabel
     ): SectorImpact[] {
         const sectorMap = new Map<string, number>();
+        const direction = this.toDirection(sentimentLabel);
 
         // 1. Sector inferred from affected stocks
         stocks.forEach((stock) => {
@@ -290,7 +321,7 @@ export class NewsAnalyzerService {
         sectorMap.forEach((weight, sector) => {
             results.push({
                 sector,
-                direction: sentimentLabel,
+                direction,
                 weight: Math.min(1.0, Number(weight.toFixed(2))),
             });
         });

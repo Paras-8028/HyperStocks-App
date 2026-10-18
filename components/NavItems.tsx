@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import SearchCommand from '@/components/SearchCommand';
-import { BarChart3, Bookmark, Compass, LayoutDashboard, Search, Sparkles } from 'lucide-react';
+import { BarChart3, Bookmark, Compass, LayoutDashboard, Newspaper, Search, Sparkles, Settings } from 'lucide-react';
 
 interface NavItemsProps {
     initialStocks: StockWithWatchlistStatus[];
@@ -18,7 +18,9 @@ export default function NavItems({ initialStocks, mobile = false, onNavigate }: 
     const isOverviewActive = pathname === '/overview' || pathname === '/';
     const isExploreActive = pathname.startsWith('/stocks');
     const isWatchlistActive = pathname.startsWith('/watchlist');
+    const isNewsActive = pathname.startsWith('/news');
     const isAIAssistantActive = pathname.startsWith('/ai-assistant');
+    const isSettingsActive = pathname.startsWith('/settings');
 
     const navLinks = [
         {
@@ -40,10 +42,22 @@ export default function NavItems({ initialStocks, mobile = false, onNavigate }: 
             active: isWatchlistActive,
         },
         {
+            href: '/news',
+            label: 'News',
+            icon: Newspaper,
+            active: isNewsActive,
+        },
+        {
             href: '/ai-assistant',
             label: 'AI Assistant',
             icon: Sparkles,
             active: isAIAssistantActive,
+        },
+        {
+            href: '/settings',
+            label: 'Settings',
+            icon: Settings,
+            active: isSettingsActive,
         },
     ];
 
@@ -84,12 +98,12 @@ export default function NavItems({ initialStocks, mobile = false, onNavigate }: 
     }
 
     return (
-        <ul className="flex items-center gap-1.5 font-medium">
+        <ul className="flex items-center gap-1 xl:gap-1.5 font-medium">
             {navLinks.map(({ href, label, icon: Icon, active }) => (
                 <li key={href}>
                     <Link
                         href={href}
-                        className={`relative flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all duration-200 ${
+                        className={`relative flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all duration-200 ${
                             active
                                 ? 'bg-[#111B2E] text-[#35D6FF] shadow-[0_0_15px_rgba(53,214,255,0.12)] border border-[#35D6FF]/35 font-bold'
                                 : 'text-[#94A3B8] hover:text-[#F4F7FF] hover:bg-[#111B2E]/50'
@@ -98,7 +112,7 @@ export default function NavItems({ initialStocks, mobile = false, onNavigate }: 
                         <Icon className={`h-3.5 w-3.5 ${active ? 'text-[#35D6FF]' : 'text-[#94A3B8]'}`} />
                         <span>{label}</span>
                         {active && (
-                            <span className="absolute -bottom-1 left-3 right-3 h-0.5 rounded-full bg-gradient-to-r from-[#7C5CFF] to-[#35D6FF]" />
+                            <span className="absolute -bottom-1 left-2.5 right-2.5 h-0.5 rounded-full bg-gradient-to-r from-[#7C5CFF] to-[#35D6FF]" />
                         )}
                     </Link>
                 </li>

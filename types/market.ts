@@ -49,3 +49,16 @@ export interface MarketSectorPerformance {
     changePercent: number;
     leadingStock?: string;
 }
+
+export type CandleResolution = '1' | '5' | '15' | '30' | '60' | 'D' | 'W' | 'M';
+
+export interface StockCandlesResult {
+    symbol: string;
+    close: number[];
+    high: number[];
+    low: number[];
+    open: number[];
+    timestamps: number[];
+    volume: number[];
+    status: 'ok' | 'no_data';
+}

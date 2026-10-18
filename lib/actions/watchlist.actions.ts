@@ -64,6 +64,25 @@ export async function getWatchlistSymbolsByEmail(emailOrUserId: string): Promise
     }
 }
 
+/** Direct lookup by Clerk userId for watchlist items */
+export async function getWatchlistStockItemsByUserId(
+    userId: string
+): Promise<Array<{ symbol: string; company: string }>> {
+    if (!userId) return [];
+
+    try {
+        await connectToDatabase();
+        const items = await Watchlist.find({ userId }, { symbol: 1, company: 1 }).lean();
+        return items.map((i) => ({
+            symbol: String(i.symbol),
+            company: String(i.company || i.symbol),
+        }));
+    } catch (err) {
+        console.error('getWatchlistStockItemsByUserId error:', err);
+        return [];
+    }
+}
+
 /** Returns symbol and company name for email news filtering */
 export async function getWatchlistStockItemsByEmail(
     emailOrUserId: string
@@ -75,21 +94,23 @@ export async function getWatchlistStockItemsByEmail(
         let userId = emailOrUserId;
 
         if (emailOrUserId.includes('@')) {
-            const mongoose = await connectToDatabase();
-            const db = mongoose.connection.db;
-            if (db) {
-                const user = await db.collection('user').findOne({ email: emailOrUserId });
-                if (user) {
-                    userId = user.id || String(user._id);
+            const { UserPreferenceModel } = await import('@/database/models/user_preference.model');
+            const prefUser = await UserPreferenceModel.findOne({ email: emailOrUserId.toLowerCase() }).lean();
+            if (prefUser?.userId) {
+                userId = prefUser.userId;
+            } else {
+                const mongoose = await connectToDatabase();
+                const db = mongoose.connection.db;
+                if (db) {
+                    const user = await db.collection('user').findOne({ email: emailOrUserId });
+                    if (user) {
+                        userId = user.id || String(user._id);
+                    }
                 }
             }
         }
 
-        const items = await Watchlist.find({ userId }, { symbol: 1, company: 1 }).lean();
-        return items.map((i) => ({
-            symbol: String(i.symbol),
-            company: String(i.company || i.symbol),
-        }));
+        return getWatchlistStockItemsByUserId(userId);
     } catch (err) {
         console.error('getWatchlistStockItemsByEmail error:', err);
         return [];

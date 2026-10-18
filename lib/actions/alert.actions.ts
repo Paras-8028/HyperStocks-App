@@ -101,3 +101,96 @@ export async function deleteAlert(alertId: string) {
 
     return { success: true };
 }
+
+/* --------------------------------------------------
+   Phase 3: Alert Preferences & Downside Risk Config
+-------------------------------------------------- */
+export async function getUserAlertPreferences() {
+    const { userId } = await getCurrentUser();
+    const { AlertPreferenceModel } = await import("@/database/models/alert_preference.model");
+    const { DEFAULT_ALERT_PREFERENCES } = await import("@/types/alerts");
+
+    const doc = await AlertPreferenceModel.findOne({ userId }).lean();
+    if (!doc || !doc.preferences) {
+        return {
+            userId,
+            preferences: DEFAULT_ALERT_PREFERENCES,
+        };
+    }
+
+    return {
+        userId,
+        preferences: {
+            ...DEFAULT_ALERT_PREFERENCES,
+            ...doc.preferences,
+        },
+    };
+}
+
+export async function updateUserAlertPreferences(updates: {
+    emailAlertsEnabled?: boolean;
+    downsideRiskAlertsEnabled?: boolean;
+    downsideRiskMinSeverity?: 'critical' | 'warning' | 'advisory';
+    downsideRiskCooldownHours?: number;
+    downsideRiskCategories?: {
+        volatility_spike?: boolean;
+        drawdown?: boolean;
+        ma_breakdown?: boolean;
+        var_exceedance?: boolean;
+        historical_low?: boolean;
+    };
+    quietHours?: {
+        enabled: boolean;
+        start: string;
+        end: string;
+    };
+}) {
+    const { userId } = await getCurrentUser();
+    const { AlertPreferenceModel } = await import("@/database/models/alert_preference.model");
+    const { DEFAULT_ALERT_PREFERENCES } = await import("@/types/alerts");
+
+    // Server-side validation
+    if (updates.downsideRiskMinSeverity) {
+        if (!['critical', 'warning', 'advisory'].includes(updates.downsideRiskMinSeverity)) {
+            throw new Error(`Invalid minimum severity: ${updates.downsideRiskMinSeverity}`);
+        }
+    }
+
+    if (updates.downsideRiskCooldownHours !== undefined) {
+        if (typeof updates.downsideRiskCooldownHours !== 'number' || updates.downsideRiskCooldownHours < 1 || updates.downsideRiskCooldownHours > 168) {
+            throw new Error('Cooldown must be between 1 and 168 hours (1 week)');
+        }
+    }
+
+    const currentDoc = await AlertPreferenceModel.findOne({ userId });
+    const currentPrefs = currentDoc?.preferences || DEFAULT_ALERT_PREFERENCES;
+
+    const mergedPreferences = {
+        ...currentPrefs,
+        ...updates,
+        downsideRiskCategories: {
+            ...currentPrefs.downsideRiskCategories,
+            ...(updates.downsideRiskCategories || {}),
+        },
+        quietHours: {
+            ...currentPrefs.quietHours,
+            ...(updates.quietHours || {}),
+        },
+    };
+
+    await AlertPreferenceModel.findOneAndUpdate(
+        { userId },
+        {
+            $set: {
+                preferences: mergedPreferences,
+            },
+        },
+        { upsert: true, new: true }
+    );
+
+    return {
+        success: true,
+        preferences: mergedPreferences,
+    };
+}
+

@@ -83,6 +83,12 @@ const CATEGORY_META: Record<
         color: 'text-[#35D6FF]',
         bg: 'bg-[#35D6FF]/10 border-[#35D6FF]/20',
     },
+    downside_risk: {
+        label: 'Downside Risk',
+        icon: AlertTriangle,
+        color: 'text-[#FF5470]',
+        bg: 'bg-[#FF5470]/10 border-[#FF5470]/20',
+    },
 };
 
 const SEVERITY_BADGES: Record<

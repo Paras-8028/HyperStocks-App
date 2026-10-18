@@ -30,6 +30,16 @@ export interface IUserPreferenceDocument extends Document {
     };
     aiPersonaPreference?: 'concise' | 'in_depth' | 'technical';
     onboardingCompleted: boolean;
+    // Email News Scheduling Foundation (Phase 2)
+    newsEmailEnabled: boolean;
+    timezone: string;
+    deliveryMode: 'daily' | 'interval';
+    preferredDeliveryTime: string;
+    scheduleIntervalMinutes: number;
+    deliveryDays: number[];
+    isSchedulePaused: boolean;
+    lastNewsDeliveryAt?: Date;
+    nextNewsDeliveryAt?: Date;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -89,6 +99,42 @@ const UserPreferenceSchema = new Schema<IUserPreferenceDocument>(
         onboardingCompleted: {
             type: Boolean,
             default: false,
+        },
+        newsEmailEnabled: {
+            type: Boolean,
+            default: true,
+        },
+        timezone: {
+            type: String,
+            default: 'Asia/Kolkata',
+        },
+        deliveryMode: {
+            type: String,
+            enum: ['daily', 'interval'],
+            default: 'daily',
+        },
+        preferredDeliveryTime: {
+            type: String,
+            default: '08:00',
+        },
+        scheduleIntervalMinutes: {
+            type: Number,
+            default: 240,
+            min: 30,
+        },
+        deliveryDays: {
+            type: [Number],
+            default: [1, 2, 3, 4, 5],
+        },
+        isSchedulePaused: {
+            type: Boolean,
+            default: false,
+        },
+        lastNewsDeliveryAt: {
+            type: Date,
+        },
+        nextNewsDeliveryAt: {
+            type: Date,
         },
     },
     { timestamps: true }

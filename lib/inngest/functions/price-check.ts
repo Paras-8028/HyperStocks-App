@@ -3,7 +3,7 @@ import { AlertNotificationEngine } from "@/services/alerts";
 
 export const checkPriceAlerts = inngest.createFunction(
     { id: "price-alert-check" },
-    { cron: "*/2 * * * *" },
+    [{ event: "app/price.alerts.check" }, { cron: "*/10 13-21 * * 1-5" }],
     async () => {
         const result = await AlertNotificationEngine.processActivePriceAlerts();
         return {

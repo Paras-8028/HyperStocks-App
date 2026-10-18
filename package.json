@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "collect:news": "npx tsx scripts/collect-news-sentiment.ts",
+    "test:phase7": "npx tsx tests/phase7_automated_news_collector.test.ts",
+    "test:phase8": "npx tsx tests/phase8_free_tier_optimization.test.ts",
+    "test:phase9": "npx tsx tests/phase9_production_readiness.test.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.16",

@@ -68,6 +68,17 @@ export interface UserPreferences {
     aiPersonaPreference?: 'concise' | 'in_depth' | 'technical';
     onboardingCompleted: boolean;
     lastUpdated?: string;
+
+    // Email News Scheduling Foundation (Phase 2)
+    newsEmailEnabled?: boolean;
+    timezone?: string;
+    deliveryMode?: 'daily' | 'interval';
+    preferredDeliveryTime?: string; // "HH:mm" (e.g. "08:00")
+    scheduleIntervalMinutes?: number; // e.g. 60, 120, 240, 360, 720
+    deliveryDays?: number[]; // [0, 1, 2, 3, 4, 5, 6] (1-5 = Weekdays)
+    isSchedulePaused?: boolean;
+    lastNewsDeliveryAt?: string | null;
+    nextNewsDeliveryAt?: string | null;
 }
 
 export interface UserProfile {
@@ -140,4 +151,13 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
         priceAlertPush: true,
         aiSignals: true,
     },
+    newsEmailEnabled: true,
+    timezone: 'Asia/Kolkata',
+    deliveryMode: 'daily',
+    preferredDeliveryTime: '08:00',
+    scheduleIntervalMinutes: 240,
+    deliveryDays: [1, 2, 3, 4, 5],
+    isSchedulePaused: false,
+    lastNewsDeliveryAt: null,
+    nextNewsDeliveryAt: null,
 };

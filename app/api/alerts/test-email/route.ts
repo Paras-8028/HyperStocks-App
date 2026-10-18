@@ -19,10 +19,152 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json().catch(() => ({}));
-        const testType = body.type || 'price'; // price, percentage_movement, news, portfolio_risk, ai_insight, daily_digest
+        const testType = body.type || 'price'; // price, percentage_movement, news, portfolio_risk, ai_insight, daily_digest, personalized_news
 
         const emailService = getEmailService();
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+        if (testType === 'personalized_news') {
+            const { getWatchlistStockItemsByUserId } = await import('@/lib/actions/watchlist.actions');
+            const { WatchlistNewsService } = await import('@/services/news/WatchlistNewsService');
+            const { WatchlistNewsSummarizer } = await import('@/services/news/WatchlistNewsSummarizer');
+            const { sendPersonalizedWatchlistNewsEmail } = await import('@/lib/nodemailer');
+            const { getFormattedTodayDate } = await import('@/lib/utils');
+            const { DigestDeliveryLogModel } = await import('@/database/models/digest_delivery_log.model');
+            const { connectToDatabase } = await import('@/database/mongoose');
+
+            await connectToDatabase();
+            const watchlistItems = await getWatchlistStockItemsByUserId(userId);
+            const watchlistService = new WatchlistNewsService();
+            const rawResult = await watchlistService.getPersonalizedWatchlistNews(watchlistItems, 4, 4);
+
+            let finalResult = rawResult;
+            if (rawResult.articles.length > 0) {
+                const summarized = await WatchlistNewsSummarizer.summarizeBatch(rawResult.articles);
+                finalResult = { ...rawResult, articles: summarized };
+            }
+
+            const sendRes = await sendPersonalizedWatchlistNewsEmail({
+                email: userEmail,
+                name: userName,
+                date: getFormattedTodayDate(),
+                result: finalResult,
+            });
+
+            // Log test delivery for observability
+            try {
+                await DigestDeliveryLogModel.create({
+                    userId,
+                    deliveryType: 'test',
+                    idempotencyKey: `${userId}:test:${Date.now()}`,
+                    symbols: finalResult.allTrackedSymbols,
+                    articleUrls: finalResult.articles.map((a) => a.url),
+                    deliveryStatus: 'sent',
+                    sentAt: new Date(),
+                    providerMessageId: (sendRes as any)?.messageId,
+                });
+            } catch (logErr) {
+                console.warn('[test-email] Delivery log warning:', logErr);
+            }
+
+            return NextResponse.json({
+                success: true,
+                testType: 'personalized_news',
+                recipient: userEmail,
+                messageId: (sendRes as any)?.messageId,
+                articlesCount: finalResult.articles.length,
+            });
+        }
+
+        if (testType === 'downside_risk') {
+            const { getWatchlistStockItemsByUserId } = await import('@/lib/actions/watchlist.actions');
+            const { DownsideRiskEngine } = await import('@/services/risk/DownsideRiskEngine');
+            const { getMarketService } = await import('@/services/market');
+            const { AlertDeliveryLogModel } = await import('@/database/models/alert_delivery_log.model');
+            const { connectToDatabase } = await import('@/database/mongoose');
+
+            await connectToDatabase();
+            const watchlistItems = await getWatchlistStockItemsByUserId(userId);
+            const targetSymbol = watchlistItems[0]?.symbol || body.symbol || 'TSLA';
+            const companyName = watchlistItems[0]?.company || body.company || targetSymbol;
+
+            const marketService = getMarketService();
+            const nowSec = Math.floor(Date.now() / 1000);
+            const oneYearAgoSec = nowSec - 365 * 24 * 60 * 60;
+
+            const [quoteRes, candleRes] = await Promise.all([
+                marketService.getQuote(targetSymbol),
+                marketService.getCandles(targetSymbol, 'D', oneYearAgoSec, nowSec),
+            ]);
+
+            const quote = quoteRes.success ? quoteRes.data : undefined;
+            const candles = candleRes.success ? candleRes.data : undefined;
+
+            const assessment = DownsideRiskEngine.assessDownsideRisk(
+                targetSymbol,
+                companyName,
+                candles,
+                quote
+            );
+
+            // If no natural condition triggered, provide a demonstration trigger for test verification
+            if (assessment.triggeredConditions.length === 0) {
+                assessment.triggeredConditions.push({
+                    category: 'drawdown',
+                    severity: 'warning',
+                    title: 'Demonstration Downside Risk Trigger',
+                    measurement: '-18.5% trailing drawdown',
+                    evidence: 'Simulated quantitative risk condition dispatched to test your alert delivery and inline email layout.',
+                    observationWindow: '63 Trading Days',
+                    thresholdApplied: '>= 15.0% Drawdown Threshold',
+                });
+                assessment.overallRiskSeverity = 'warning';
+            }
+
+            const alertData: AlertEmailData = {
+                userName: `[TEST] ${userName}`,
+                userEmail,
+                alertType: 'downside_risk',
+                ticker: targetSymbol,
+                companyName,
+                currentPrice: assessment.currentPrice || 180.25,
+                priceChange: quote?.change || -4.5,
+                percentageChange: quote?.percentChange || -2.44,
+                triggerValue: assessment.triggeredConditions[0]?.measurement,
+                triggerCondition: assessment.triggeredConditions[0]?.thresholdApplied,
+                riskLevel: assessment.overallRiskSeverity,
+                whyItMatters: `Test notification for ${targetSymbol}: ${assessment.triggeredConditions[0]?.evidence}`,
+                hyperstocksUrl: baseUrl,
+                timestamp: Date.now(),
+                riskAssessment: assessment,
+            };
+
+            const sendRes = await emailService.sendAlertEmail(alertData);
+
+            // Record test delivery log
+            try {
+                await AlertDeliveryLogModel.create({
+                    userId,
+                    alertKey: `downside_risk:test:${targetSymbol}:${Date.now()}`,
+                    alertCategory: 'downside_risk',
+                    symbol: targetSymbol,
+                    sentAt: new Date(),
+                    cooldownUntil: new Date(Date.now() + 60 * 1000),
+                    deliveryStatus: sendRes.success ? 'sent' : 'failed',
+                    messageId: (sendRes as any)?.id,
+                });
+            } catch {}
+
+            return NextResponse.json({
+                success: sendRes.success,
+                testType: 'downside_risk',
+                recipient: userEmail,
+                symbol: targetSymbol,
+                messageId: (sendRes as any)?.id,
+                triggeredCount: assessment.triggeredConditions.length,
+                riskScore: assessment.experimentalRiskScore,
+            });
+        }
 
         if (testType === 'daily_digest') {
             const digestData: DailyDigestEmailData = {

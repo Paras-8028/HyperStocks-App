@@ -8,11 +8,33 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { messages, context } = body;
 
-        if (!messages || !Array.isArray(messages)) {
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
             return NextResponse.json(
-                { success: false, error: 'Messages array is required' },
+                { success: false, error: 'Messages array is required and cannot be empty' },
                 { status: 400 }
             );
+        }
+
+        if (messages.length > 50) {
+            return NextResponse.json(
+                { success: false, error: 'Conversation history exceeds maximum permitted length (50 messages)' },
+                { status: 400 }
+            );
+        }
+
+        for (const msg of messages) {
+            if (!msg || typeof msg !== 'object' || typeof msg.content !== 'string') {
+                return NextResponse.json(
+                    { success: false, error: 'Malformed message in history' },
+                    { status: 400 }
+                );
+            }
+            if (msg.content.length > 4000) {
+                return NextResponse.json(
+                    { success: false, error: 'Individual message content exceeds 4000 characters limit' },
+                    { status: 400 }
+                );
+            }
         }
 
         const aiService = getAIService();

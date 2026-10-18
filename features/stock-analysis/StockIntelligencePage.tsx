@@ -29,6 +29,9 @@ import {
     Zap,
 } from 'lucide-react';
 import { AIThesisCardSkeleton } from '@/components/common/LoadingSkeleton';
+import { QuantitativeRiskSection } from '@/components/risk/QuantitativeRiskSection';
+import { NewsIntelligenceFeed } from '@/features/news/NewsIntelligenceFeed';
+import { HistoricalSentimentSection } from './HistoricalSentimentSection';
 
 // Client-side in-memory session cache for stock analysis (15-min TTL)
 const analysisClientCache = new Map<string, { data: DetailedStockIntelligence; timestamp: number }>();
@@ -616,6 +619,25 @@ export function StockIntelligencePage({
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Verified Breaking News & Impact Breakdown for this Stock */}
+                            <div className="pt-4 border-t border-gray-800 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="font-bold text-gray-200 flex items-center gap-1.5">
+                                        <Sparkles className="h-4 w-4 text-[#35D6FF]" />
+                                        <span>Verified News Intelligence Feed (${cleanSymbol})</span>
+                                    </div>
+                                    <span className="text-[10px] text-gray-500">
+                                        Evidence-Backed Sentiment & Impact Analysis
+                                    </span>
+                                </div>
+                                <NewsIntelligenceFeed symbols={[cleanSymbol]} />
+                            </div>
+
+                            {/* Phase 2/3: Historical Sentiment Evaluation against Subsequent Stock Returns */}
+                            <div className="pt-4 border-t border-gray-800">
+                                <HistoricalSentimentSection symbol={cleanSymbol} />
+                            </div>
                         </div>
                     )}
 
@@ -681,6 +703,13 @@ export function StockIntelligencePage({
                                     </p>
                                 </div>
                             </div>
+
+                            {/* Phase 3: Quantitative Downside Risk Engine Indicators */}
+                            <QuantitativeRiskSection
+                                symbol={cleanSymbol}
+                                companyName={displayName}
+                                quote={quote}
+                            />
                         </div>
                     )}
 

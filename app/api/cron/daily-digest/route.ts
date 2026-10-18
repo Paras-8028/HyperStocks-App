@@ -45,33 +45,41 @@ export async function GET(req: Request) {
             marketService.getQuote('DIA'),
         ]);
 
-        const indices = [
-            {
+        const indices = [];
+        if (spyRes.success && spyRes.data) {
+            indices.push({
                 name: 'S&P 500 (SPY)',
-                value: spyRes.success ? spyRes.data.currentPrice : 580.2,
-                change: spyRes.success ? spyRes.data.change : 4.1,
-                percentChange: spyRes.success ? spyRes.data.percentChange : 0.72,
-            },
-            {
+                value: spyRes.data.currentPrice,
+                change: spyRes.data.change,
+                percentChange: spyRes.data.percentChange,
+            });
+        }
+        if (qqqRes.success && qqqRes.data) {
+            indices.push({
                 name: 'NASDAQ (QQQ)',
-                value: qqqRes.success ? qqqRes.data.currentPrice : 492.5,
-                change: qqqRes.success ? qqqRes.data.change : 6.4,
-                percentChange: qqqRes.success ? qqqRes.data.percentChange : 1.31,
-            },
-            {
+                value: qqqRes.data.currentPrice,
+                change: qqqRes.data.change,
+                percentChange: qqqRes.data.percentChange,
+            });
+        }
+        if (diaRes.success && diaRes.data) {
+            indices.push({
                 name: 'Dow Jones (DIA)',
-                value: diaRes.success ? diaRes.data.currentPrice : 435.8,
-                change: diaRes.success ? diaRes.data.change : 1.2,
-                percentChange: diaRes.success ? diaRes.data.percentChange : 0.28,
-            },
-        ];
+                value: diaRes.data.currentPrice,
+                change: diaRes.data.change,
+                percentChange: diaRes.data.percentChange,
+            });
+        }
 
-        const avgBenchmarkMove = (indices[0].percentChange + indices[1].percentChange) / 2;
-        const directionSummary = avgBenchmarkMove >= 0.5
-            ? 'Broad-based bullish momentum with tech leadership outperforming defensives.'
-            : avgBenchmarkMove <= -0.5
-            ? 'Defensive rotation underway amid macro volatility and elevated bond yields.'
-            : 'Consolidation session as major indices trade within tight trading bands.';
+        let directionSummary = 'Market benchmark data temporarily unavailable from provider.';
+        if (indices.length > 0) {
+            const avgBenchmarkMove = indices.reduce((acc, idx) => acc + idx.percentChange, 0) / indices.length;
+            directionSummary = avgBenchmarkMove >= 0.5
+                ? 'Broad-based bullish momentum with market benchmarks posting positive gains.'
+                : avgBenchmarkMove <= -0.5
+                ? 'Defensive market posture amid broader index pressure.'
+                : 'Consolidation session as major indices trade within narrow ranges.';
+        }
 
         // 2. Fetch Top Market News
         const newsService = getNewsService();

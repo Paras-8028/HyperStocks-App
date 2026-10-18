@@ -1,6 +1,7 @@
 import { FinnhubNewsService } from './FinnhubNewsService';
 import { getDateRange, validateArticle } from '@/lib/utils';
 import { ApiClient } from '@/services/api/apiClient';
+import { NewsSentimentClass, NewsConfidenceDimensions } from '@/types/news';
 
 export interface WatchlistStockItem {
     symbol: string;
@@ -17,11 +18,38 @@ export interface WatchlistArticle {
     relatedSymbols: string[];
     relatedCompanies: string[];
     relevanceScore: number;
-    // Structured summaries for the email cards
+    // Structured summaries for the email cards and news feed
     whatHappened?: string;
     whyItMatters?: string;
     bottomLine?: string;
     impact?: 'positive' | 'negative' | 'mixed' | 'uncertain';
+    sentiment?: NewsSentimentClass;
+    confidenceScore?: number;
+    confidenceRationale?: string;
+    confidenceDimensions?: NewsConfidenceDimensions;
+    sourceReliabilityScore?: number;
+    interpretationConfidenceScore?: number;
+    marketDirectionalUncertaintyScore?: number;
+    directionalUncertaintyLevel?: 'low' | 'moderate' | 'high' | 'extreme';
+    companySentiment?: NewsSentimentClass;
+    marketSentiment?: NewsSentimentClass;
+    shortTermOutlook?: string;
+    longTermConsiderations?: string;
+    affectedEntity?: {
+        name: string;
+        type: 'company' | 'sector' | 'market';
+        symbol?: string;
+    };
+    risks?: string[];
+    opportunities?: string[];
+    isAIGenerated?: boolean;
+    isFallback?: boolean;
+    sourceEvidence?: {
+        headline: string;
+        source: string;
+        url: string;
+        datetime: number;
+    };
 }
 
 export interface WatchlistNewsResult {
@@ -91,6 +119,19 @@ export class WatchlistNewsService {
     }
 
     /**
+     * Normalizes headlines by removing wire noise, prefixes (BRIEF, UPDATE, etc.) and punctuation
+     * to avoid treating multiple syndicated articles repeating the same announcement as independent evidence.
+     */
+    public static normalizeHeadlineForDeduplication(headline: string): string {
+        return (headline || '')
+            .toLowerCase()
+            .replace(/^(brief\s*[-:]|update\s*\d*\s*[-:]|exclusive\s*[-:]|breaking\s*[-:]|press release\s*[-:]|stocks to watch\s*[-:])/i, '')
+            .replace(/[^a-z0-9 ]/gi, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    /**
      * Cleans company name by removing corporate legal suffixes
      * e.g. "Apple Inc." -> "Apple", "NVIDIA Corporation" -> "NVIDIA", "Tesla, Inc." -> "Tesla"
      */
@@ -157,13 +198,71 @@ export class WatchlistNewsService {
     }
 
     /**
-     * Fetches and ranks personalized news articles for a user's watchlist
+     * Fetches Finnhub company news for a list of distinct tickers with bounded concurrency
+     * and rate-limiting protection.
      */
-    async getPersonalizedWatchlistNews(
-        watchlist: WatchlistStockItem[],
+    async fetchNewsForDistinctTickers(
+        tickers: string[],
         daysBack = 4,
-        maxArticles = 6
-    ): Promise<WatchlistNewsResult> {
+        concurrency = 4
+    ): Promise<{ newsMap: Map<string, any[]>; hadSuccessfulFetch: boolean; error?: string }> {
+        const newsMap = new Map<string, any[]>();
+        if (!tickers || tickers.length === 0) {
+            return { newsMap, hadSuccessfulFetch: true };
+        }
+
+        if (!this.token) {
+            return { newsMap, hadSuccessfulFetch: false, error: 'Finnhub API key is not configured' };
+        }
+
+        const range = getDateRange(daysBack);
+        let hadSuccessfulFetch = false;
+        let lastError: string | undefined;
+
+        // Process tickers in bounded concurrent chunks
+        for (let i = 0; i < tickers.length; i += concurrency) {
+            const chunk = tickers.slice(i, i + concurrency);
+            await Promise.all(
+                chunk.map(async (sym) => {
+                    const cleanSym = sym.trim().toUpperCase();
+                    try {
+                        const url = `${this.baseUrl}/company-news?symbol=${encodeURIComponent(cleanSym)}&from=${range.from}&to=${range.to}&token=${this.token}`;
+                        const res = await ApiClient.get<any[]>(url, { revalidateSeconds: 300 });
+
+                        if (!res.success) {
+                            lastError = res.error;
+                            newsMap.set(cleanSym, []);
+                            return;
+                        }
+
+                        hadSuccessfulFetch = true;
+                        newsMap.set(cleanSym, res.data || []);
+                    } catch (err: any) {
+                        lastError = err?.message || 'Error fetching ticker news';
+                        newsMap.set(cleanSym, []);
+                    }
+                })
+            );
+
+            // Brief throttle pause between chunks to respect API rate limits
+            if (i + concurrency < tickers.length) {
+                await new Promise((resolve) => setTimeout(resolve, 120));
+            }
+        }
+
+        return { newsMap, hadSuccessfulFetch, error: lastError };
+    }
+
+    /**
+     * Filters, deduplicates, scores, and ranks news articles for a specific user watchlist
+     * using pre-fetched or cached raw news data. Guarantees user isolation.
+     */
+    filterAndRankNewsForWatchlist(
+        watchlist: WatchlistStockItem[],
+        newsMap: Map<string, any[]>,
+        maxArticles = 6,
+        apiError?: string
+    ): WatchlistNewsResult {
         if (!watchlist || watchlist.length === 0) {
             return {
                 status: 'empty_watchlist',
@@ -197,89 +296,88 @@ export class WatchlistNewsService {
             };
         }
 
-        if (!this.token) {
-            return {
-                status: 'api_error',
-                articles: [],
-                allTrackedSymbols,
-                allTrackedCompanies,
-                symbolsWithNews: [],
-                symbolsWithoutNews: allTrackedSymbols,
-                error: 'Finnhub API key is not configured',
-            };
-        }
-
-        const range = getDateRange(daysBack);
         const candidateArticles: Map<string, { raw: any; symbols: Set<string> }> = new Map();
+        let hadAnyArticles = false;
 
-        // 1. Fetch company news per tracked symbol
-        let hadSuccessfulFetch = false;
-        let lastError: string | undefined;
+        for (const sym of allTrackedSymbols) {
+            const items = newsMap.get(sym) || [];
+            const companyName = allTrackedCompanies[sym] || sym;
 
-        await Promise.all(
-            allTrackedSymbols.map(async (sym) => {
-                const companyName = allTrackedCompanies[sym] || sym;
-                try {
-                    const url = `${this.baseUrl}/company-news?symbol=${encodeURIComponent(sym)}&from=${range.from}&to=${range.to}&token=${this.token}`;
-                    const res = await ApiClient.get<any[]>(url, { revalidateSeconds: 300 });
+            for (const art of items) {
+                if (!validateArticle(art)) continue;
+                hadAnyArticles = true;
 
-                    if (!res.success) {
-                        lastError = res.error;
-                        return;
-                    }
+                const fullText = `${art.headline || ''} ${art.summary || ''}`;
 
-                    hadSuccessfulFetch = true;
-                    const items = res.data || [];
+                // Filter out non-market noise
+                const isNoisy = IRRELEVANT_PATTERNS.some((pat) => pat.test(art.headline || ''));
+                if (isNoisy) continue;
 
-                    for (const art of items) {
-                        if (!validateArticle(art)) continue;
-
-                        const fullText = `${art.headline || ''} ${art.summary || ''}`;
-
-                        // Check for irrelevant non-market noise
-                        const isNoisy = IRRELEVANT_PATTERNS.some((pat) => pat.test(art.headline || ''));
-                        if (isNoisy) continue;
-
-                        // Verify relevance to this symbol/company
-                        if (!this.isRelevantToStock(fullText, sym, companyName)) {
-                            continue;
-                        }
-
-                        // Deduplicate by URL or normalized headline
-                        const dedupeKey = (art.url && art.url !== '#')
-                            ? art.url.split('?')[0].toLowerCase()
-                            : (art.headline || '').toLowerCase().trim();
-
-                        if (!dedupeKey) continue;
-
-                        if (candidateArticles.has(dedupeKey)) {
-                            candidateArticles.get(dedupeKey)!.symbols.add(sym);
-                        } else {
-                            candidateArticles.set(dedupeKey, {
-                                raw: art,
-                                symbols: new Set([sym]),
-                            });
-                        }
-                    }
-                } catch (e: any) {
-                    lastError = e?.message;
+                // Context and relevance verification
+                if (!this.isRelevantToStock(fullText, sym, companyName)) {
+                    continue;
                 }
-            })
-        );
 
-        if (!hadSuccessfulFetch && candidateArticles.size === 0) {
+                // Canonical URL or normalized headline deduplication
+                const urlKey = (art.url && art.url !== '#')
+                    ? art.url.split('?')[0].toLowerCase()
+                    : '';
+                const normHeadline = WatchlistNewsService.normalizeHeadlineForDeduplication(art.headline || '');
+
+                if (!normHeadline && !urlKey) continue;
+
+                // Match against existing candidate entries by URL or normalized headline
+                let matchedKey: string | null = null;
+                if (urlKey && candidateArticles.has(urlKey)) {
+                    matchedKey = urlKey;
+                } else if (normHeadline && candidateArticles.has(normHeadline)) {
+                    matchedKey = normHeadline;
+                } else {
+                    for (const [existingKey, entry] of candidateArticles.entries()) {
+                        const existingNorm = WatchlistNewsService.normalizeHeadlineForDeduplication(entry.raw.headline || '');
+                        if (existingNorm && normHeadline && existingNorm === normHeadline) {
+                            matchedKey = existingKey;
+                            break;
+                        }
+                    }
+                }
+
+                if (matchedKey) {
+                    candidateArticles.get(matchedKey)!.symbols.add(sym);
+                } else {
+                    const primaryKey = urlKey || normHeadline;
+                    candidateArticles.set(primaryKey, {
+                        raw: art,
+                        symbols: new Set([sym]),
+                    });
+                }
+            }
+        }
+
+        if (candidateArticles.size === 0) {
+            if (apiError && !hadAnyArticles) {
+                return {
+                    status: 'api_error',
+                    articles: [],
+                    allTrackedSymbols,
+                    allTrackedCompanies,
+                    symbolsWithNews: [],
+                    symbolsWithoutNews: allTrackedSymbols,
+                    error: apiError,
+                };
+            }
+
             return {
-                status: 'api_error',
+                status: 'no_news',
                 articles: [],
                 allTrackedSymbols,
                 allTrackedCompanies,
                 symbolsWithNews: [],
                 symbolsWithoutNews: allTrackedSymbols,
-                error: lastError || 'Failed to communicate with news provider',
             };
         }
 
-        // 2. Score and rank articles
+        // Score and rank articles
         const scoredArticles: WatchlistArticle[] = [];
         const nowMs = Date.now();
 
@@ -301,7 +399,7 @@ export class WatchlistNewsService {
                 }
             }
 
-            // Multi-stock relevance bonus (e.g. deals between two watched stocks)
+            // Multi-stock relevance bonus
             if (symList.length > 1) {
                 score += 5;
             }
@@ -340,7 +438,7 @@ export class WatchlistNewsService {
 
         const selectedArticles = scoredArticles.slice(0, maxArticles);
 
-        // 3. Track coverage across the user's watchlist
+        // Coverage tracking
         const symbolsWithNewsSet = new Set<string>();
         selectedArticles.forEach((art) => {
             art.relatedSymbols.forEach((s) => symbolsWithNewsSet.add(s));
@@ -348,17 +446,6 @@ export class WatchlistNewsService {
 
         const symbolsWithNews = allTrackedSymbols.filter((s) => symbolsWithNewsSet.has(s));
         const symbolsWithoutNews = allTrackedSymbols.filter((s) => !symbolsWithNewsSet.has(s));
-
-        if (selectedArticles.length === 0) {
-            return {
-                status: 'no_news',
-                articles: [],
-                allTrackedSymbols,
-                allTrackedCompanies,
-                symbolsWithNews: [],
-                symbolsWithoutNews: allTrackedSymbols,
-            };
-        }
 
         return {
             status: 'success',
@@ -368,5 +455,30 @@ export class WatchlistNewsService {
             symbolsWithNews,
             symbolsWithoutNews,
         };
+    }
+
+    /**
+     * Fetches and ranks personalized news articles for a user's watchlist
+     */
+    async getPersonalizedWatchlistNews(
+        watchlist: WatchlistStockItem[],
+        daysBack = 4,
+        maxArticles = 6
+    ): Promise<WatchlistNewsResult> {
+        if (!watchlist || watchlist.length === 0) {
+            return {
+                status: 'empty_watchlist',
+                articles: [],
+                allTrackedSymbols: [],
+                allTrackedCompanies: {},
+                symbolsWithNews: [],
+                symbolsWithoutNews: [],
+            };
+        }
+
+        const distinctSymbols = Array.from(new Set(watchlist.map((w) => w.symbol.trim().toUpperCase())));
+        const { newsMap, error } = await this.fetchNewsForDistinctTickers(distinctSymbols, daysBack);
+
+        return this.filterAndRankNewsForWatchlist(watchlist, newsMap, maxArticles, error);
     }
 }

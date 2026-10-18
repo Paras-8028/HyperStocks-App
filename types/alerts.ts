@@ -9,7 +9,8 @@ export type SmartAlertCategory =
     | 'news'
     | 'earnings'
     | 'portfolio_risk'
-    | 'ai_insight';
+    | 'ai_insight'
+    | 'downside_risk';
 
 export type SmartAlertSeverity = 'critical' | 'warning' | 'info' | 'advisory';
 
@@ -49,6 +50,17 @@ export interface AlertNotificationPreferences {
         start: string; // "22:00"
         end: string;   // "07:00"
     };
+    // Phase 3: Quantitative Downside Risk Alert Preferences
+    downsideRiskAlertsEnabled?: boolean;
+    downsideRiskMinSeverity?: SmartAlertSeverity;
+    downsideRiskCooldownHours?: number;
+    downsideRiskCategories?: {
+        volatility_spike?: boolean;
+        drawdown?: boolean;
+        ma_breakdown?: boolean;
+        var_exceedance?: boolean;
+        historical_low?: boolean;
+    };
 }
 
 export const DEFAULT_ALERT_PREFERENCES: AlertNotificationPreferences = {
@@ -61,6 +73,7 @@ export const DEFAULT_ALERT_PREFERENCES: AlertNotificationPreferences = {
         earnings: true,
         portfolio_risk: true,
         ai_insight: true,
+        downside_risk: true,
     },
     minSeverity: 'advisory',
     emailDigest: true,
@@ -74,6 +87,7 @@ export const DEFAULT_ALERT_PREFERENCES: AlertNotificationPreferences = {
         earnings: true,
         portfolio_risk: true,
         ai_insight: true,
+        downside_risk: true,
     },
     emailFrequency: 'instant',
     pushEnabled: true,
@@ -81,6 +95,16 @@ export const DEFAULT_ALERT_PREFERENCES: AlertNotificationPreferences = {
         enabled: false,
         start: '22:00',
         end: '07:00',
+    },
+    downsideRiskAlertsEnabled: true,
+    downsideRiskMinSeverity: 'warning',
+    downsideRiskCooldownHours: 24,
+    downsideRiskCategories: {
+        volatility_spike: true,
+        drawdown: true,
+        ma_breakdown: true,
+        var_exceedance: true,
+        historical_low: true,
     },
 };
 

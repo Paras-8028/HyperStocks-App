@@ -244,6 +244,11 @@ export function generateAlertSubject(data: AlertEmailData): string {
                 ? `🤖 AI Alert: ${detectedSignal} on ${ticker}`
                 : `🤖 HyperStocks AI detected an unusual market signal for ${ticker}`;
 
+        case 'downside_risk': {
+            const topCondition = data.riskAssessment?.triggeredConditions?.[0]?.title;
+            return `⚠️ Downside Risk Alert: ${ticker} (${topCondition || 'Elevated Risk Triggered'})`;
+        }
+
         default:
             return `🔔 HyperStocks Alert: ${ticker} market intelligence`;
     }

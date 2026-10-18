@@ -17,3 +17,5 @@ export * from './SmartAlertGenerator';
 export * from '@/services/alerts/AlertContextCollector';
 export * from '@/services/alerts/AlertAIInterpreter';
 export * from '@/services/alerts/AlertNotificationEngine';
+export * from '@/services/alerts/DownsideRiskAlertService';
+
