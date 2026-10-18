@@ -1,3 +1,10 @@
+export interface FinnhubQuote {
+    symbol: string;
+    price: number;
+    timestamp?: number;
+    volume?: number;
+}
+
 type QuoteListener = (data: FinnhubQuote) => void;
 
 class FinnhubWS {

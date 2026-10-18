@@ -1,0 +1,22 @@
+import { FinnhubNewsService } from './FinnhubNewsService';
+import { INewsService } from './INewsService';
+
+let newsServiceInstance: INewsService | null = null;
+
+export function getNewsService(): INewsService {
+    if (!newsServiceInstance) {
+        newsServiceInstance = new FinnhubNewsService();
+    }
+    return newsServiceInstance;
+}
+
+export * from './INewsService';
+export * from './FinnhubNewsService';
+export * from './NewsAnalyzerService';
+export * from './NewsClusteringService';
+export * from './NewsIntelligenceService';
+export * from './WatchlistNewsService';
+export * from './WatchlistNewsSummarizer';
+export * from './NewsSentimentCollectorService';
+export * from './HistoricalSentimentEvaluator';
+

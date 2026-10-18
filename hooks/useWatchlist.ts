@@ -29,12 +29,14 @@ export function useWatchlist() {
         try {
             setLoading(true);
             const res = await getUserWatchlist();
-
-            if (!res.success) {
-                throw new Error(res.error);
-            }
-
-            setItems(res.data);
+            setItems(
+                (res || []).map((item) => ({
+                    _id: item.id,
+                    symbol: item.symbol,
+                    company: item.company,
+                    addedAt: item.addedAt ? new Date(item.addedAt) : undefined,
+                }))
+            );
             setError(null);
         } catch (err) {
             console.error('useWatchlist load error:', err);
@@ -60,10 +62,10 @@ export function useWatchlist() {
 
             const res = await addToWatchlist(upper, company);
 
-            if (!res.success) {
+            if (!res?.success) {
                 // Rollback
                 setItems((prev) => prev.filter((i) => i.symbol !== upper));
-                setError(res.error || 'Failed to add');
+                setError(res?.error || 'Failed to add');
             }
         },
         []
@@ -80,12 +82,12 @@ export function useWatchlist() {
         const previous = items;
         setItems((prev) => prev.filter((i) => i.symbol !== upper));
 
-        const res = await removeFromWatchlist(upper);
-
-        if (!res.success) {
+        try {
+            await removeFromWatchlist(upper);
+        } catch (err: any) {
             // Rollback
             setItems(previous);
-            setError(res.error || 'Failed to remove');
+            setError(err?.message || 'Failed to remove');
         }
     }, [items]);
 

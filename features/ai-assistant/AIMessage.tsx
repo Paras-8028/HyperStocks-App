@@ -1,0 +1,241 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Bot, Check, Copy, Sparkles, User, AlertTriangle, RotateCw } from 'lucide-react';
+import Link from 'next/link';
+import { toast } from 'sonner';
+
+export interface AIMessageProps {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    timestamp?: number;
+    model?: string;
+    isStreaming?: boolean;
+    isError?: boolean;
+    errorDetails?: {
+        code?: string;
+        retryable?: boolean;
+        retryAfterSeconds?: number;
+    };
+    onRetry?: () => void;
+}
+
+export function AIMessage({
+    role,
+    content,
+    timestamp,
+    model,
+    isStreaming = false,
+    isError = false,
+    errorDetails,
+    onRetry,
+}: AIMessageProps) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(content);
+            setCopied(true);
+            toast.success('Response copied to clipboard');
+            setTimeout(() => setCopied(false), 2000);
+        } catch {
+            toast.error('Failed to copy');
+        }
+    };
+
+    const isUser = role === 'user';
+
+    // Simple markdown renderer for bold text, bullet points, headers, and ticker links
+    const renderFormattedContent = (text: string) => {
+        const lines = text.split('\n');
+
+        return lines.map((line, idx) => {
+            // Check for markdown table row
+            if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+                const cells = line
+                    .split('|')
+                    .slice(1, -1)
+                    .map((c) => c.trim());
+                if (cells.every((c) => c.includes('---'))) {
+                    return null; // Divider row
+                }
+                return (
+                    <div
+                        key={idx}
+                        className="grid grid-flow-col auto-cols-fr gap-2 py-1 px-2 border-b border-gray-850 text-[11px] font-mono"
+                    >
+                        {cells.map((cell, cIdx) => (
+                            <span key={cIdx} className={idx === 0 ? 'font-bold text-gray-200' : 'text-gray-300'}>
+                                {cell}
+                            </span>
+                        ))}
+                    </div>
+                );
+            }
+
+            // Headers
+            if (line.startsWith('### ')) {
+                return (
+                    <h5 key={idx} className="text-xs font-bold text-emerald-400 mt-2.5 mb-1">
+                        {line.replace('### ', '')}
+                    </h5>
+                );
+            }
+            if (line.startsWith('## ')) {
+                return (
+                    <h4 key={idx} className="text-sm font-bold text-gray-100 mt-3 mb-1">
+                        {line.replace('## ', '')}
+                    </h4>
+                );
+            }
+
+            // Bullet points
+            if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+                const bulletText = line.trim().substring(2);
+                return (
+                    <div key={idx} className="flex items-start gap-2 text-xs text-gray-200 my-0.5 leading-relaxed">
+                        <span className="text-emerald-400 font-bold shrink-0">•</span>
+                        <span>{formatInlineText(bulletText)}</span>
+                    </div>
+                );
+            }
+
+            // Empty line spacer
+            if (!line.trim()) {
+                return <div key={idx} className="h-1.5" />;
+            }
+
+            // Standard paragraph
+            return (
+                <p key={idx} className="text-xs text-gray-200 leading-relaxed my-0.5">
+                    {formatInlineText(line)}
+                </p>
+            );
+        });
+    };
+
+    // Formats inline bold text (**bold**) and ticker symbols ($AAPL)
+    const formatInlineText = (str: string) => {
+        const parts = str.split(/(\*\*.*?\*\*|\$[A-Z]{1,5}\b|\b[A-Z]{2,5}\b)/g);
+
+        return parts.map((part, pIdx) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+                return (
+                    <strong key={pIdx} className="font-semibold text-gray-100">
+                        {part.slice(2, -2)}
+                    </strong>
+                );
+            }
+
+            // Ticker symbol highlighted with link
+            const isTicker =
+                part.startsWith('$') ||
+                ['AAPL', 'NVDA', 'MSFT', 'TSLA', 'AMZN', 'GOOGL', 'META', 'AMD', 'SPY', 'QQQ', 'UBER', 'LLY'].includes(
+                    part
+                );
+
+            if (isTicker) {
+                const clean = part.replace('$', '');
+                return (
+                    <Link
+                        key={pIdx}
+                        href={`/stocks/${clean}`}
+                        className="inline-flex items-center text-emerald-400 font-bold hover:underline hover:text-emerald-300 mx-0.5"
+                    >
+                        ${clean}
+                    </Link>
+                );
+            }
+
+            return part;
+        });
+    };
+
+    return (
+        <div
+            className={`flex gap-2 sm:gap-2.5 text-xs leading-relaxed ${
+                isUser ? 'justify-end' : 'justify-start'
+            }`}
+        >
+            {!isUser && (
+                <div
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl shadow-sm mt-0.5 ${
+                        isError
+                            ? 'bg-amber-500/15 border border-amber-500/30 text-amber-400'
+                            : 'bg-gradient-to-br from-[#7C5CFF]/20 to-[#35D6FF]/20 border border-[#7C5CFF]/40 text-[#35D6FF]'
+                    }`}
+                >
+                    {isError ? <AlertTriangle className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+                </div>
+            )}
+
+            <div
+                className={`relative group max-w-[90%] sm:max-w-[85%] rounded-2xl px-3 sm:px-3.5 py-2 sm:py-2.5 space-y-1.5 backdrop-blur shadow-md break-words overflow-hidden ${
+                    isUser
+                        ? 'bg-gradient-to-r from-[#7C5CFF] to-[#35D6FF] text-[#050816] font-medium rounded-tr-none shadow-lg shadow-[#7C5CFF]/20'
+                        : isError
+                        ? 'bg-[#17121E] text-[#F4F7FF] border border-amber-500/30 rounded-tl-none'
+                        : 'bg-[#0D1424]/95 text-[#F4F7FF] border border-[rgba(148,163,184,0.14)] rounded-tl-none'
+                }`}
+            >
+                {/* Header for assistant message */}
+                {!isUser && (
+                    <div className="flex items-center justify-between border-b border-[rgba(148,163,184,0.12)] pb-1.5 text-[10px] sm:text-[11px] text-[#94A3B8]">
+                        <div className="flex items-center gap-1.5 font-medium">
+                            <span className={isError ? 'text-amber-300 font-semibold' : 'text-[#35D6FF] font-semibold'}>
+                                {isError ? 'System Advisory Notice' : 'AI Financial Assistant'}
+                            </span>
+                            {model && !isError && <span className="text-[10px] text-[#94A3B8]/70">({model})</span>}
+                        </div>
+
+                        {!isError && (
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={handleCopy}
+                                    className="p-1 text-[#94A3B8] hover:text-[#F4F7FF] rounded"
+                                    title="Copy response"
+                                >
+                                    {copied ? <Check className="h-3.5 w-3.5 text-[#3DFFA0]" /> : <Copy className="h-3.5 w-3.5" />}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Message body */}
+                <div className="space-y-1">
+                    {renderFormattedContent(content)}
+                    {isStreaming && (
+                        <span className="inline-block h-3.5 w-1.5 bg-[#35D6FF] animate-pulse ml-1" />
+                    )}
+                </div>
+
+                {/* Retry action if available and retryable */}
+                {isError && onRetry && errorDetails?.retryable !== false && (
+                    <div className="pt-2">
+                        <button
+                            onClick={onRetry}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[11px] font-medium border border-amber-500/30 transition-colors"
+                        >
+                            <RotateCw className="h-3 w-3" />
+                            Retry Question
+                        </button>
+                    </div>
+                )}
+
+                {/* Timestamp */}
+                {timestamp && (
+                    <div className={`text-[10px] pt-1 text-right ${isUser ? 'text-[#050816]/75' : 'text-[#94A3B8]'}`}>
+                        {new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                )}
+            </div>
+
+            {isUser && (
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#111B2E] border border-[rgba(148,163,184,0.18)] text-[#F4F7FF] mt-0.5">
+                    <User className="h-4 w-4 text-[#35D6FF]" />
+                </div>
+            )}
+        </div>
+    );
+}
